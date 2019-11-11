@@ -119,7 +119,7 @@
 
 		<mkdir dir="${dist.dir}/docs" />
 		<javadoc sourcepath="${src.dir}" destdir="${dist.dir}/docs" />
-		<jar compress="true" destfile="${dist.dir}/qaf-support-javadoc.jar" basedir="${dist.dir}/docs" />
+		<jar compress="true" destfile="${dist.dir}/qaf-cucumber-javadoc.jar" basedir="${dist.dir}/docs" />
 		<delete dir="${dist.dir}/docs">
 		</delete>
 	</target>
@@ -140,25 +140,6 @@
 			</manifest>
 		</jar>
 	</target>
-
-	<target name="publish2" depends="init, build">
-		<!-- Determine build number from previously published revisions -->
-		<ivy:buildnumber resolver="local-m2-publish" organisation="${ivy.organisation}" module="${ivy.module}" revision="${release.num}" />
-
-		<!-- Resolve ivy dependencies and create a Maven POM file -->
-		<ivy:deliver deliverpattern="${dist.dir}/ivy.xml" pubrevision="${release.num}" status="release" />
-		<ivy:makepom ivyfile="${dist.dir}/ivy.xml" pomfile="${dist.dir}/qaf-support.pom" />
-
-		<!-- Publish the local repo. Defaults to ~/.ivy2/local -->
-		<ivy:publish resolver="local-m2-publish" forcedeliver="true" publishivy="true" pubrevision="${release.num}" overwrite="true">
-			<artifacts pattern="${dist.dir}/[artifact].[ext]" />
-			<artifact name="qaf-support" pattern="${dist.dir}/[artifact].[ext]" ext="pom" type="pom" />
-			<artifact name="qaf-support-sources" pattern="${dist.dir}/[artifact].[ext]" ext="jar" type="source" />
-			<artifact name="qaf-support-javadoc" pattern="${dist.dir}/[artifact].[ext]" ext="zip" type="javadoc" />
-		</ivy:publish>
-
-	</target>
-
 	<target name="publish" depends="init, build">
 		<!-- Determine build number from previously published revisions -->
 		<ivy:buildnumber resolver="${publish.resolver}" organisation="${ivy.organisation}" module="${ivy.module}" revision="${release.num}" />
