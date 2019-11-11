@@ -60,19 +60,14 @@ public class QAFReporter {
 	public static void createMetaInfo() {
 		createMetaInfo(true);
 		updateOverview(null, true);
-		;
-
 	}
 
 	private static void createMetaInfo(boolean listEntry) {
 
 		String suiteName = getBundle().getString("suite.name",
 				new File(".").getAbsoluteFile().getParentFile().getName());
-		// List<XmlTest> tests = suite.getXmlSuite().getTests();
 		List<String> testNames = new ArrayList<String>();
-		// for (XmlTest test : tests) {
 		testNames.add(getTestName());
-		// }
 
 		String dir = ApplicationProperties.JSON_REPORT_DIR.getStringVal();
 		Report report = new Report();
@@ -93,32 +88,6 @@ public class QAFReporter {
 		report.setDir(dir);
 
 		int pass = passCnt.get(), fail = failCnt.get(), skip = skipCnt.get(), total = 0;
-		// Iterator<ISuiteResult> iter = suite.getResults().values().iterator();
-		// resultMap.put(suite.getXmlSuite(), suite.getResults().values());
-		// while (iter.hasNext()) {
-		// ITestContext context = iter.next().getTestContext();
-		// pass += getPassCnt(context);
-		// skip += getSkipCnt(context);
-		// fail += getFailCnt(context) + getFailWithPassPerCnt(context);
-		// total += getTotal(context);
-		// }
-		// List<XmlSuite> childs = suite.getXmlSuite().getChildSuites();
-		// for(XmlSuite csuite: childs){
-		// tests = csuite.getTests();
-		// for (XmlTest test : tests) {
-		// testNames.add(getTestName(test));
-		// }
-		// if(resultMap.containsKey(csuite)){
-		// iter = resultMap.get(csuite).iterator();
-		// while (iter.hasNext()) {
-		// ITestContext context = iter.next().getTestContext();
-		// pass += getPassCnt(context);
-		// skip += getSkipCnt(context);
-		// fail += getFailCnt(context) + getFailWithPassPerCnt(context);
-		// total += getTotal(context);
-		// }
-		// }
-		// }
 		report.setPass(pass);
 		report.setFail(fail);
 		report.setSkip(skip);
@@ -172,9 +141,7 @@ public class QAFReporter {
 					String hostname = execHostName("hostname");
 					executionEnvInfo.put("host", hostname);
 				}
-
 				envInfo.put("execution-env-info", executionEnvInfo);
-
 			}
 
 			int pass = passCnt.get();
@@ -230,7 +197,6 @@ public class QAFReporter {
 		try {
 			String className = tc.getScenarioDesignation().substring(0, tc.getScenarioDesignation().indexOf(".feature"))
 					.replaceAll("/", ".");
-			// String name = (bdd2Pickle.getName());
 			String classdir = getClassDir(getTestName() + "/" + className);
 
 			MethodResult methodResult = new MethodResult();
@@ -285,52 +251,14 @@ public class QAFReporter {
 		methodInfo.setDuration(result.getDuration().toMillis());
 
 		Map<String, Object> metadata = bdd2Pickle.getMetaData();
-		// if (tc.getMethod().isTest()) {
-		// methodInfo.setIndex(0);
-		// int retryCount = getBundle().getInt(RetryAnalyzer.RETRY_INVOCATION_COUNT, 0);
-		// if (retryCount > 0) {
-		// methodInfo.setRetryCount(retryCount);
-		// }
 		if (null != bdd2Pickle.getTestData()) {
 			methodInfo.setArgs(new Object[] { bdd2Pickle.getTestData() });
 		}
-		// if (result.getMethod() instanceof TestNGScenario) {
-		// TestNGScenario scenario = (TestNGScenario) result.getMethod();
-		// metadata = scenario.getMetaData();
-		// metadata.put("description", scenario.getDescription());
-		// metadata.put("groups", scenario.getGroups());
-		// } else {
-		//// String desc = ApplicationProperties.CURRENT_TEST_DESCRIPTION
-		//// .getStringVal(result.getMethod().getDescription());
-		// metadata = new HashMap<String, Object>();
-		// metadata.put("groups", result.getMethod().getGroups());
-		// metadata.put("description", desc);
-		// }
-		// metadata.put("name", getMethodName(bdd2Pickle));
+		
 		methodInfo.setMetaData(metadata);
-		// getBundle().clearProperty(ApplicationProperties.CURRENT_TEST_DESCRIPTION.key);
-		//
-		// Test test = result.getMethod().getConstructorOrMethod().getMethod()
-		// .getAnnotation(Test.class);
-		// if (((test.dependsOnMethods() != null)
-		// && (test.dependsOnMethods().length > 0))
-		// || ((test.dependsOnGroups() != null)
-		// && (test.dependsOnGroups().length > 0))) {
-		// String[] depends =
-		// {"Methods: " + Arrays.toString(test.dependsOnMethods()),
-		// "Groups: " + Arrays.toString(test.dependsOnGroups())};
-		// methodInfo.setDependsOn(depends);
-		// }
+		
 		methodInfo.setType("test");
-		// } else { // config method
-		// String name = getMethodName(bdd2Pickle);
-		// logger.debug("config method: " + name);
-		//
-		// metadata = bdd2Pickle.getMetaData();
-		// methodInfo.setMetaData(metadata);
-		// methodInfo.setType("config");
-		//
-		// }
+		
 		methodInfo.setResult(getResult(result));
 
 		if (StringUtil.isNotBlank(methodfname)) {
@@ -345,7 +273,6 @@ public class QAFReporter {
 		} else {
 			logger.warn("methodInfo already wrritten for " + methodInfo.getName());
 		}
-
 	}
 
 	private static String getMethodName(Bdd2Pickle bdd2Pickle) {
@@ -433,5 +360,4 @@ public class QAFReporter {
 		}
 		return "";
 	}
-
 }
