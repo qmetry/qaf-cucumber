@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="build" name="QualityAutomationFramework" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+
+	<!-- Sets the DSTAMP, TSTAMP, and TODAY properties in the current project -->
+	<tstamp>
+		<format property="build.timestamp" pattern="dd-MMM-yyyy HH:mm:ss" />
+	</tstamp>
+
+	<property name="bin.dir" value="${basedir}/bin" />
+	<property name="src.dir" value="${basedir}/src" />
+	<property name="meta.dir" value="${basedir}/META-INF" />
+	<property name="debuglevel" value="source,lines,vars" />
+	<property name="target" value="1.8" />
+	<property name="source" value="1.8" />
+	<property file="build.properties" />
+
+	<path id="build.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<!-- IVY -->
+	<target name="download-ivy" unless="skip.download">
+		<mkdir dir="${ivy.jar.dir}" />
+		<!-- download Ivy from web site so that it can be used even without any 
+			special installation -->
+		<echo message="installing ivy..." />
+		<get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.jar.file}" usetimestamp="true" />
+	</target>
+	<!-- ================================= target: install-ivy this target is 
+		not necessary if you put ivy.jar in your ant lib directory if you already 
+		have ivy in your ant lib, you can simply remove this target and the dependency 
+		the 'go' target has on it ================================= -->
+	<target name="install-ivy" depends="download-ivy" description="--> install ivy">
+		<!-- try to load ivy here from local ivy dir, in case the user has not 
+			already dropped it into ant's lib dir (note that the latter copy will always 
+			take precedence). We will not fail as long as local lib dir exists (it may 
+			be empty) and ivy is in at least one of ant's lib dir or the local lib dir. -->
+		<path id="ivy.lib.path">
+			<fileset dir="${ivy.jar.dir}" includes="*.jar" />
+		</path>
+		<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path" />
+
+	</target>
+
+	<!-- ================================= target: resolve ================================= -->
+	<target name="resolve" description="--> retrieve dependencies with ivy" depends="install-ivy">
+
+
+		<ivy:resolve file="ivy.xml" />
+		<ivy:cachepath pathid="lib.path.id" />
+
+		<ivy:addpath topath="build.classpath">
+			<path refid="lib.path.id" />
+		</ivy:addpath>
+	</target>
+
+	<target name="init" depends="resolve">
+		<mkdir dir="${bin.dir}" />
+		<mkdir dir="${dist.dir}" />
+		<copy includeemptydirs="false" todir="${bin.dir}">
+			<fileset dir="${src.dir}">
+				<exclude name="**/*.ucls" />
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+	</target>
+	<target name="clean">
+		<delete dir="${bin.dir}" failonerror="false" />
+		<delete dir="${dist.dir}" failonerror="false" />
+	</target>
+
+
+
+	<target depends="init" name="compile">
+		<mkdir dir="${bin.dir}" />
+		<echo level="info">--- compile (start) ---</echo>
+		<javac debug="false" destdir="${bin.dir}" source="${source}" target="${target}">
+			<src path="${src.dir}" />
+			<classpath refid="build.classpath" />
+		</javac>
+		<echo level="info">--- compile (finished) ---</echo>
+	</target>
+	<!-- ================================= target: build ================================= -->
+	<target name="build" depends="make-jar, gendoc, gensource" description="build framework, generate docs">
+
+
+	</target>
+	<target name="make-jar" depends="clean, compile" description="build basic version">
+		<mkdir dir="${dist.dir}" />
+		<jar destfile="${dist.dir}/qaf-cucumber.jar" basedir="${bin.dir}">
+			<metainf dir="." includes="LICENSE.txt" />
+			<metainf dir="." includes="${dist.dir}/pom.xml,${dist.dir}/pom.properties" />
+
+			<manifest>
+				<attribute name="Vendor" value="Infostretch Corp." />
+				<attribute name="Built-By" value="${user.name}" />
+
+				<section name="Build-Info">
+					<attribute name="qaf-Build-Time" value="${build.timestamp}" />
+					<!-- Information about the program itself -->
+					<attribute name="qaf-Version" value="${version-num}" />
+					<attribute name="qaf-Revision" value="${build-num}" />
+					<attribute name="qaf-Type" value="support" />
+				</section>
+			</manifest>
+			<service type="org.testng.ITestNGListener">
+				<provider classname="com.qmetry.qaf.automation.cucumber.CucumberStepLoader" />
+			</service>
+		</jar>
+	</target>
+
+	<target name="gendoc" depends="init" description="generate documentation">
+		<delete dir="${dist.dir}/docs" />
+
+		<mkdir dir="${dist.dir}/docs" />
+		<javadoc sourcepath="${src.dir}" destdir="${dist.dir}/docs" />
+		<jar compress="true" destfile="${dist.dir}/qaf-support-javadoc.jar" basedir="${dist.dir}/docs" />
+		<delete dir="${dist.dir}/docs">
+		</delete>
+	</target>
+	<target name="gensource" description="Generate Source" depends="init">
+		<jar destfile="${dist.dir}/qaf-cucumber-sources.jar" basedir="${src.dir}">
+			<metainf dir="." includes="LICENSE" />
+			<manifest>
+				<attribute name="Vendor" value="Infostretch Corp." />
+				<attribute name="Built-By" value="${user.name}" />
+
+				<section name="Build-Info">
+					<attribute name="qaf-Build-Time" value="${build.timestamp}" />
+					<!-- Information about the program itself -->
+					<attribute name="qaf-Version" value="${version-num}" />
+					<attribute name="qaf-Revision" value="${build-num}" />
+					<attribute name="qaf-Type" value="support" />
+				</section>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="publish2" depends="init, build">
+		<!-- Determine build number from previously published revisions -->
+		<ivy:buildnumber resolver="local-m2-publish" organisation="${ivy.organisation}" module="${ivy.module}" revision="${release.num}" />
+
+		<!-- Resolve ivy dependencies and create a Maven POM file -->
+		<ivy:deliver deliverpattern="${dist.dir}/ivy.xml" pubrevision="${release.num}" status="release" />
+		<ivy:makepom ivyfile="${dist.dir}/ivy.xml" pomfile="${dist.dir}/qaf-support.pom" />
+
+		<!-- Publish the local repo. Defaults to ~/.ivy2/local -->
+		<ivy:publish resolver="local-m2-publish" forcedeliver="true" publishivy="true" pubrevision="${release.num}" overwrite="true">
+			<artifacts pattern="${dist.dir}/[artifact].[ext]" />
+			<artifact name="qaf-support" pattern="${dist.dir}/[artifact].[ext]" ext="pom" type="pom" />
+			<artifact name="qaf-support-sources" pattern="${dist.dir}/[artifact].[ext]" ext="jar" type="source" />
+			<artifact name="qaf-support-javadoc" pattern="${dist.dir}/[artifact].[ext]" ext="zip" type="javadoc" />
+		</ivy:publish>
+
+	</target>
+
+	<target name="publish" depends="init, build">
+		<!-- Determine build number from previously published revisions -->
+		<ivy:buildnumber resolver="${publish.resolver}" organisation="${ivy.organisation}" module="${ivy.module}" revision="${release.num}" />
+
+		<!-- Resolve ivy dependencies and create a Maven POM file -->
+		<ivy:deliver deliverpattern="${dist.dir}/ivy.xml" pubrevision="${release.num}" status="${status}" />
+		<ivy:makepom ivyfile="${dist.dir}/ivy.xml" pomfile="${dist.dir}/${artifact.name}.pom" templatefile="pom.tmpl">
+			<mapping conf="compile" scope="compile" />
+			<mapping conf="runtime" scope="runtime" />
+			<mapping conf="test" scope="test" />
+			<mapping conf="provided" scope="provided" />
+		</ivy:makepom>
+
+		<!-- Publish the local repo. Defaults to ~/.ivy2/local -->
+		<ivy:publish resolver="${publish.resolver}" forcedeliver="true" publishivy="false" pubrevision="${release.num}" overwrite="true">
+			<artifacts pattern="${dist.dir}/[artifact](-[classifier]).[ext]" />
+			<artifact name="${artifact.name}" pattern="${dist.dir}/[artifact].[ext]" ext="pom" type="pom" version="${release.num}" />
+			<artifact name="${artifact.name}" pattern="${dist.dir}/[artifact].[ext]" ext="jar" classifier="sources" type="sources" version="${release.num}" />
+			<artifact name="${artifact.name}" pattern="${dist.dir}/[artifact].[ext]" ext="jar" classifier="javadoc" type="javadoc" version="${release.num}" />
+		</ivy:publish>
+	</target>
+
+</project>
