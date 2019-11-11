@@ -25,7 +25,7 @@ When you are using QAF BDD runner you can use Cucumber 5 steps with QAF BDD or B
  * TestNG Execution configuration
  
 ### Using qaf-cucumber with Cucumber runner
-Cucumber is not required with QAF and you can use BDD(QAF BDD, BDD2, Gherkin) with QAF without cucumber. However, When you want to use cucumber or cucumber runner you can get support of `BDD2` and QAF reporting.
+Cucumber is not required with QAF and you can use BDD(QAF BDD, BDD2, Gherkin) with QAF without cucumber. However, When you want to use cucumber or cucumber runner you can get support of `BDD2` and QAF reporting. 
 
 ##### QAF Over Cucumber 
  Following are **additional features** when used QAF with Cucumber:
@@ -34,3 +34,6 @@ Cucumber is not required with QAF and you can use BDD(QAF BDD, BDD2, Gherkin) wi
  * QAF Detailed reporting
  * Integration with third party tools
  * Inbuilt Web/MObile/Web-service functional test automation support
+ 
+Required to add cucumber plugin `com.qmetry.qaf.automation.cucumber.QAFCucumberPlugin` to get above features with cucumber.
+ 
