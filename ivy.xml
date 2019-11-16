@@ -22,7 +22,7 @@
     </configurations>
 
 	<dependencies>
-		<dependency org="com.qmetry" name="qaf" rev="2.1.14" conf="provided->default"/>
-		<dependency org="io.cucumber" name="cucumber-core" rev="5.0.0-RC1" conf="provided->default"/>
+		<dependency org="com.qmetry" name="qaf" rev="2.1.15-SNAPSHOT" conf="runtime->default"/>
+		<dependency org="io.cucumber" name="cucumber-core" rev="5.0.0-RC1" conf="runtime->default"/>
 	</dependencies>
 </ivy-module>
