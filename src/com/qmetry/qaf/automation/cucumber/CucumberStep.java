@@ -47,7 +47,6 @@ public class CucumberStep extends BaseTestStep {
 		if (s.parameterInfos().isEmpty() || pattern.contains("{")) {
 			return pattern;
 		}
-
 		return pattern + "{0}";
 	}
 
@@ -116,7 +115,6 @@ public class CucumberStep extends BaseTestStep {
 			context.put("__paramType", paramType);
 			context.put("__paramIndex", i);
 			if (paramType.getTypeName().endsWith("DataTable")) {
-				//System.out.println("convert to datatable" + params[i]);
 				formatter = new DataTableFormattor();
 			}
 			params[i] = formatter.format(params[i], context);

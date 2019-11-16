@@ -3,18 +3,13 @@
  */
 package com.qmetry.qaf.automation.cucumber;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import static com.qmetry.qaf.automation.core.ConfigurationManager.getBundle;
+import static com.qmetry.qaf.automation.cucumber.CucumberStepsFinder.buildBackendWorlds;
+import static com.qmetry.qaf.automation.cucumber.CucumberStepsFinder.disposeBackendWorlds;
 
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
-
-import com.qmetry.qaf.automation.core.ConfigurationManager;
-import com.qmetry.qaf.automation.keys.ApplicationProperties;
-
-import io.cucumber.core.feature.GluePath;
 
 /**
  * 
@@ -33,33 +28,35 @@ public class CucumberStepLoader implements ITestListener {
 
 	@Override
 	public void onTestStart(ITestResult result) {
-		List<URI> uris = new ArrayList<URI>();
-		for (String pkg : ConfigurationManager.getBundle()
-				.getStringArray(ApplicationProperties.STEP_PROVIDER_PKG.key)) {
-			uris.add(GluePath.parse(pkg));
-		}
-
-		try {
-			new CucumberStepsScanner().loadSteps(uris);
-		} catch (Exception e) {
-			e.printStackTrace();
+		if (!getBundle().getBoolean("cucumber.run.mode", false)) {
+			buildBackendWorlds();
 		}
 	}
 
 	@Override
 	public void onTestSuccess(ITestResult result) {
+		testCaseCompleted();
 	}
 
 	@Override
 	public void onTestFailure(ITestResult result) {
+		testCaseCompleted();
 	}
 
 	@Override
 	public void onTestSkipped(ITestResult result) {
+		testCaseCompleted();
 	}
 
 	@Override
 	public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
+		testCaseCompleted();
+	}
+
+	private void testCaseCompleted() {
+		if (!getBundle().getBoolean("cucumber.run.mode", false)) {
+			disposeBackendWorlds();
+		}
 	}
 
 }

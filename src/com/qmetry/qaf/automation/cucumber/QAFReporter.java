@@ -52,6 +52,7 @@ public class QAFReporter {
 	private static AtomicInteger passCnt = new AtomicInteger(0);
 	private static AtomicInteger failCnt = new AtomicInteger(0);
 	private static AtomicInteger skipCnt = new AtomicInteger(0);
+	private static AtomicInteger indexer = new AtomicInteger(0);
 
 	public static void updateMetaInfo() {
 		createMetaInfo(false);
@@ -213,9 +214,10 @@ public class QAFReporter {
 			bdd2Pickle.getMetaData().remove(QAF_TEST_IDENTIFIER);
 
 			if (f.exists()) {
-				// if file already exists then it will append some random
+				// if file already exists then it will append some unique
 				// character as suffix
-				fileName += StringUtil.getRandomString("aaaaaaaaaa");
+				String suffix = "_"+indexer.incrementAndGet();
+				fileName += suffix;
 				// add updated file name as 'resultFileName' key in metaData
 				methodResultFile = classdir + "/" + fileName;
 
@@ -295,8 +297,8 @@ public class QAFReporter {
 		}
 		id = StringUtil.toTitleCaseIdentifier(id);
 
-		if (id.length() > 50) {
-			id = id.substring(0, 50);
+		if (id.length() > 45) {
+			id = id.substring(0, 45);
 		}
 		bdd2Pickle.getMetaData().put(QAF_TEST_IDENTIFIER, id);
 		return (String) bdd2Pickle.getMetaData().get(QAF_TEST_IDENTIFIER);
@@ -329,16 +331,14 @@ public class QAFReporter {
 		case FAILED:
 			failCnt.incrementAndGet();
 			return "fail";
-		case SKIPPED:
+		default:
 			skipCnt.incrementAndGet();
 			return "skip";
-		default:
-			return "";
 		}
 	}
 
 	private static String getTestName() {
-		return "BDD2";
+		return getBundle().getString("testname", "BDD2");
 	}
 
 	public static String execHostName(String execCommand) {

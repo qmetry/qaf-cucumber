@@ -111,6 +111,9 @@
 			<service type="org.testng.ITestNGListener">
 				<provider classname="com.qmetry.qaf.automation.cucumber.CucumberStepLoader" />
 			</service>
+			<service type="com.qmetry.qaf.automation.step.StepFinder">
+				<provider classname="com.qmetry.qaf.automation.cucumber.CucumberStepsFinder" />
+			</service>
 		</jar>
 	</target>
 

@@ -4,6 +4,7 @@
 package com.qmetry.qaf.automation.cucumber;
 
 import static com.qmetry.qaf.automation.core.ConfigurationManager.getBundle;
+import static com.qmetry.qaf.automation.data.MetaDataScanner.applyMetaRule;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -26,11 +27,12 @@ import com.qmetry.qaf.automation.integration.TestCaseResultUpdator;
 import com.qmetry.qaf.automation.integration.TestCaseRunResult;
 import com.qmetry.qaf.automation.keys.ApplicationProperties;
 import com.qmetry.qaf.automation.util.ClassUtil;
+import com.qmetry.qaf.automation.util.Reporter;
 import com.qmetry.qaf.automation.util.StringMatcher;
 import com.qmetry.qaf.automation.util.StringUtil;
 
 import io.cucumber.plugin.ConcurrentEventListener;
-import io.cucumber.plugin.EventListener;
+import io.cucumber.plugin.event.EmbedEvent;
 import io.cucumber.plugin.event.EventHandler;
 import io.cucumber.plugin.event.EventPublisher;
 import io.cucumber.plugin.event.PickleStepTestStep;
@@ -43,14 +45,14 @@ import io.cucumber.plugin.event.TestRunFinished;
 import io.cucumber.plugin.event.TestRunStarted;
 import io.cucumber.plugin.event.TestStepFinished;
 import io.cucumber.plugin.event.TestStepStarted;
+import io.cucumber.plugin.event.WriteEvent;
 
 /**
  * @author chirag.jayswal
  *
  */
-public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener {
+public class QAFCucumberPlugin implements ConcurrentEventListener {
 	private static final Log logger = LogFactoryImpl.getLog(QAFCucumberPlugin.class);
-
 
 	/*
 	 * (non-Javadoc)
@@ -61,6 +63,8 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 	 */
 	@Override
 	public void setEventPublisher(EventPublisher publisher) {
+		setCucumberRunner(true);
+
 		publisher.registerHandlerFor(TestRunStarted.class, runStartedHandler);
 		publisher.registerHandlerFor(TestRunFinished.class, runFinishedHandler);
 
@@ -69,14 +73,26 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 
 		publisher.registerHandlerFor(TestStepStarted.class, stepStartedHandler);
 		publisher.registerHandlerFor(TestStepFinished.class, stepfinishedHandler);
+		publisher.registerHandlerFor(EmbedEvent.class, embedEventHandler);
+		publisher.registerHandlerFor(WriteEvent.class, (event) -> {
+			Reporter.log(event.getText());
+		});
+
 	}
+
+	private EventHandler<EmbedEvent> embedEventHandler = new EventHandler<EmbedEvent>() {
+
+		@Override
+		public void receive(EmbedEvent event) {
+			// event.
+		}
+	};
 
 	private EventHandler<TestStepStarted> stepStartedHandler = new EventHandler<TestStepStarted>() {
 
 		@Override
 		public void receive(TestStepStarted event) {
-			//TestStep step = event.getTestStep();
-
+			// TestStep step = event.getTestStep();
 			QAFTestBase stb = TestBaseProvider.instance().get();
 			ArrayList<CheckpointResultBean> allResults = new ArrayList<CheckpointResultBean>(
 					stb.getCheckPointResults());
@@ -99,28 +115,28 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 
 		@SuppressWarnings("unchecked")
 		private void logStep(PickleStepTestStep testStep, Result result) {
-			// String keyword = getStepKeyword(testStep);
 			String stepText = testStep.getStep().getKeyWord() + testStep.getStepText();
-
-			// String locationPadding = createPaddingToLocation(STEP_INDENT, keyword +
-			// stepText);
-			//String status = result.getStatus().name().toLowerCase(ROOT);
-			Number duration = result.getDuration().toMillis();
+			Long duration = result.getDuration().toMillis();
 			QAFTestBase stb = TestBaseProvider.instance().get();
 
-			if (result.getError()!=null) {
+			if (result.getError() != null) {
 				CheckpointResultBean failureCheckpoint = new CheckpointResultBean();
 				failureCheckpoint.setMessage(result.getError().getMessage());
 				failureCheckpoint.setType(MessageTypes.Fail);
 				stb.getCheckPointResults().add(failureCheckpoint);
 			}
-			
-			MessageTypes type = getStepMessageType(stb.getCheckPointResults());
-			Boolean success = result.getStatus().is(Status.PASSED) && !type.isFailure();
+
+			MessageTypes type = result.getStatus().is(Status.PASSED)
+					&& getStepMessageType(stb.getCheckPointResults()).isFailure() ? MessageTypes.TestStepFail
+							: getStepMessageType(result.getStatus());
+			// MessageTypes type = success? getStepMessageType(stb.getCheckPointResults()) :
+			// MessageTypes.;
 
 			LoggingBean stepLogBean = new LoggingBean(testStep.getPattern(),
-					 testStep.getDefinitionArgument().stream().map(a-> {return a.getValue();}).collect(Collectors.toList()). toArray(new String[] {}),
-					success? "success" : "fail");
+					testStep.getDefinitionArgument().stream().map(a -> {
+						return a.getValue();
+					}).collect(Collectors.toList()).toArray(new String[] {}),
+					result.getStatus().name());
 			stepLogBean.setSubLogs(new ArrayList<LoggingBean>(stb.getLog()));
 
 			CheckpointResultBean stepResultBean = new CheckpointResultBean();
@@ -129,9 +145,10 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 			stepResultBean.setDuration(duration.intValue());
 
 			stepResultBean.setType(type);
-			
-			ArrayList<CheckpointResultBean> allResults = (ArrayList<CheckpointResultBean>)stb.getContext().getObject("allResults");
-			ArrayList<LoggingBean> allCommands = (ArrayList<LoggingBean>)stb.getContext().getObject("allCommands");
+
+			ArrayList<CheckpointResultBean> allResults = (ArrayList<CheckpointResultBean>) stb.getContext()
+					.getObject("allResults");
+			ArrayList<LoggingBean> allCommands = (ArrayList<LoggingBean>) stb.getContext().getObject("allCommands");
 			stb.getContext().clearProperty("allResults");
 			stb.getContext().clearProperty("allCommands");
 
@@ -144,10 +161,11 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 			stb.getLog().clear();
 			stb.getLog().addAll(allCommands);
 		}
-		
+
 		private MessageTypes getStepMessageType(List<CheckpointResultBean> subSteps) {
 			MessageTypes type = MessageTypes.TestStepPass;
 			for (CheckpointResultBean subStep : subSteps) {
+				type = MessageTypes.TestStepPass;
 				if (StringMatcher.containsIgnoringCase("fail").match(subStep.getType())) {
 					return MessageTypes.TestStepFail;
 				}
@@ -156,6 +174,20 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 				}
 			}
 			return type;
+		}
+
+		private MessageTypes getStepMessageType(io.cucumber.plugin.event.Status status) {
+			switch (status) {
+			case PASSED:
+				return MessageTypes.TestStepPass;
+			case FAILED:
+			case UNDEFINED:
+				return MessageTypes.TestStepFail;
+			case AMBIGUOUS:
+				return MessageTypes.Warn;
+			default:
+				return MessageTypes.TestStep;
+			}
 		}
 	};
 
@@ -171,38 +203,48 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 			stb.getCheckPointResults().clear();
 		}
 	};
-	
+
 	private EventHandler<TestCaseFinished> tcfinishedHandler = new EventHandler<TestCaseFinished>() {
 
 		@Override
 		public void receive(TestCaseFinished event) {
-			TestCase tc = event.getTestCase();
-			Bdd2Pickle bdd2Pickle = getBdd2Pickle(tc);
-			
-			QAFTestBase stb = TestBaseProvider.instance().get();
-			final List<CheckpointResultBean> checkpoints = new ArrayList<CheckpointResultBean>(stb.getCheckPointResults());
-			final List<LoggingBean> logs = new ArrayList<LoggingBean>(stb.getLog());
-			Result result = event.getResult();
-			if(stb.getVerificationErrors()>0 && result.getStatus().is(Status.PASSED)) {
-				result = new Result(Status.FAILED, result.getDuration(), result.getError());
-				try {
-					ClassUtil.setField("result", event, result);
-				} catch (Exception e) {
+			try {
+				TestCase tc = event.getTestCase();
+				Bdd2Pickle bdd2Pickle = getBdd2Pickle(tc);
+				boolean isDryRun = (boolean) getField("dryRun", tc);
+				if (isDryRun) {
+					String result = applyMetaRule(bdd2Pickle.getMetaData());
+					if (StringUtil.isNotBlank(result)) {
+						Reporter.log(result, MessageTypes.Fail);
+					}
 				}
-			}
-			QAFReporter.createMethodResult(tc, bdd2Pickle,result, logs, checkpoints);
-			
-			deployResult(bdd2Pickle,tc,result);
-			String useSingleSeleniumInstance =
-					getBundle().getString("selenium.singletone", "");
-			if (useSingleSeleniumInstance.toUpperCase().startsWith("M")) {
-				stb.tearDown();
+				QAFTestBase stb = TestBaseProvider.instance().get();
+				final List<CheckpointResultBean> checkpoints = new ArrayList<CheckpointResultBean>(
+						stb.getCheckPointResults());
+				final List<LoggingBean> logs = new ArrayList<LoggingBean>(stb.getLog());
+				Result result = event.getResult();
+				if (stb.getVerificationErrors() > 0 && result.getStatus().is(Status.PASSED)) {
+					result = new Result(Status.FAILED, result.getDuration(), result.getError());
+					try {
+						ClassUtil.setField("result", event, result);
+					} catch (Exception e) {
+					}
+				}
+				QAFReporter.createMethodResult(tc, bdd2Pickle, result, logs, checkpoints);
+				if (!isDryRun) {
+					deployResult(bdd2Pickle, tc, result);
+				}
+				String useSingleSeleniumInstance = getBundle().getString("selenium.singletone", "");
+				if (useSingleSeleniumInstance.toUpperCase().startsWith("M")) {
+					stb.tearDown();
+				}
+			} catch (Exception e) {
+				logger.error("QAFCucumberPlugin unable to process TestCaseFinished event", e);
 			}
 		}
 
-		private void deployResult(Bdd2Pickle bdd2Pickle,TestCase tc, Result eventresult) {
+		private void deployResult(Bdd2Pickle bdd2Pickle, TestCase tc, Result eventresult) {
 			String updator = getBundle().getString("result.updator");
-
 			try {
 				if (StringUtil.isNotBlank(updator)) {
 					TestCaseRunResult result = eventresult.getStatus() == Status.PASSED ? TestCaseRunResult.PASS
@@ -218,13 +260,14 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 					params.put("name", tc.getName());
 					params.put("duration", eventresult.getDuration().toMillis());
 
-					//Bdd2Pickle bdd2Pickle = getBdd2Pickle(event.getTestCase());
+					// Bdd2Pickle bdd2Pickle = getBdd2Pickle(event.getTestCase());
 					if (null != bdd2Pickle) {
 						params.putAll(bdd2Pickle.getMetaData());
 						Map<String, Object> testData = bdd2Pickle.getTestData();
 						if (testData != null) {
 							params.put("testdata", testData);
-							String identifierKey = ApplicationProperties.TESTCASE_IDENTIFIER_KEY.getStringVal("testCaseId");
+							String identifierKey = ApplicationProperties.TESTCASE_IDENTIFIER_KEY
+									.getStringVal("testCaseId");
 							if (testData.containsKey(identifierKey)) {
 								params.put(identifierKey, testData.get(identifierKey));
 							}
@@ -236,13 +279,11 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 							updatorObj, params);
 				}
 			} catch (Exception e) {
-				logger.warn("Unable to deploy result", e);
+				logger.warn("QAFCucumberPlugin unable to deploy result", e);
 			}
-
 		}
 	};
 
-	
 	private EventHandler<TestRunStarted> runStartedHandler = new EventHandler<TestRunStarted>() {
 		@Override
 		public void receive(TestRunStarted event) {
@@ -250,7 +291,6 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 		}
 
 		private void startReport(TestRunStarted event) {
-			System.out.println("QAFCucumberPlugin:: " + event.getInstant());
 			QAFReporter.createMetaInfo();
 		}
 	};
@@ -261,14 +301,15 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 		}
 
 		private void endReport(TestRunFinished event) {
-			System.out.println("QAFCucumberPlugin:: " + event.getInstant());
 			QAFReporter.updateMetaInfo();
-			QAFReporter.updateOverview(null, true);;
-			
+			QAFReporter.updateOverview(null, true);
+			;
+
 			TestBaseProvider.instance().stopAll();
 			ResultUpdator.awaitTermination();
 		}
 	};
+
 	private static Bdd2Pickle getBdd2Pickle(Object testCase) {
 		try {
 			Object pickle = getField("pickle", testCase);
@@ -307,6 +348,10 @@ public class QAFCucumberPlugin implements ConcurrentEventListener, EventListener
 			e.printStackTrace();
 		}
 		return null;
-
 	}
+
+	private void setCucumberRunner(boolean cucumberRunner) {
+		getBundle().setProperty("cucumber.run.mode", cucumberRunner);
+	}
+
 }
