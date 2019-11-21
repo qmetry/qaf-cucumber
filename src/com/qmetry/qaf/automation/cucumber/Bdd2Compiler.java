@@ -44,6 +44,11 @@ import gherkin.pickles.PickleStep;
 import gherkin.pickles.PickleString;
 import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
+/**
+ * 
+ * @author chirag.jayswal
+ *
+ */
 public class Bdd2Compiler {
 
 	public List<Pickle> compile(GherkinDocument gherkinDocument) {
@@ -235,13 +240,18 @@ public class Bdd2Compiler {
 
 	private String interpolate(String name, List<TableCell> variableCells, List<TableCell> valueCells) {
 		int col = 0;
+		StringBuffer row = new StringBuffer("{");
 		for (TableCell variableCell : variableCells) {
 			TableCell valueCell = valueCells.get(col++);
 			String header = variableCell.getValue();
 			String value = valueCell.getValue();
 			name = name.replace("<" + header + ">", value);
 			name = name.replace("${" + header + "}", value);
+			row.append("'").append(header).append("':'").append(value).append("',");
 		}
+		row.deleteCharAt(row.lastIndexOf(",")).append("}");
+		
+		name = name.replace("${args[0]}", row );
 		return name;
 	}
 
