@@ -89,7 +89,7 @@ public class QAFStepDefinition implements StepDefinition {
 	@Override
 	public String getPattern() {
 
-		return step.getDescription().replaceAll("\\{\\w+\\}", "{string}");
+		return step.getDescription().replaceAll("\\{[a-zA-Z0-9_-]+\\}", "{string}");
 	}
 
 	class ParameterInfoImpl implements ParameterInfo {
@@ -117,4 +117,8 @@ public class QAFStepDefinition implements StepDefinition {
 
 	}
 
+	public static void main(String[] args) {
+		String s="a is {task-name} and {threshold}";
+		System.out.println(s.replaceAll("\\{[a-zA-Z0-9_-]+\\}", "{string}"));
+	}
 }
