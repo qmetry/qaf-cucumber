@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.qmetry.qaf.automation.step.JavaStep;
 import com.qmetry.qaf.automation.step.TestStep;
+import com.qmetry.qaf.automation.step.client.text.BDDDefinitionHelper.ParamType;
 
 import io.cucumber.core.backend.CucumberBackendException;
 import io.cucumber.core.backend.CucumberInvocationTargetException;
@@ -78,7 +79,8 @@ public class QAFStepDefinition implements StepDefinition {
 				parameterInfos.add(new ParameterInfoImpl(type));
 			}
 		}
-		return parameterInfos;
+		//need to take a look...
+		return null;//parameterInfos;
 	}
 
 	/*
@@ -89,7 +91,7 @@ public class QAFStepDefinition implements StepDefinition {
 	@Override
 	public String getPattern() {
 
-		return step.getDescription().replaceAll("\\{[a-zA-Z0-9_-]+\\}", "{string}");
+		return step.getDescription().replaceAll(ParamType.getParamDefRegx(), "{string}");
 	}
 
 	class ParameterInfoImpl implements ParameterInfo {
@@ -102,6 +104,10 @@ public class QAFStepDefinition implements StepDefinition {
 
 		@Override
 		public Type getType() {
+			/*if(type instanceof Class<?> && ((Class<?>)type).isPrimitive()){
+				return type;
+			}
+			return String.class;*/
 			return type;
 		}
 
@@ -115,10 +121,5 @@ public class QAFStepDefinition implements StepDefinition {
 			return () -> type;
 		}
 
-	}
-
-	public static void main(String[] args) {
-		String s="a is {task-name} and {threshold}";
-		System.out.println(s.replaceAll("\\{[a-zA-Z0-9_-]+\\}", "{string}"));
 	}
 }

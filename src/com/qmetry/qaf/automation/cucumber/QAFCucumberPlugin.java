@@ -4,7 +4,7 @@
 package com.qmetry.qaf.automation.cucumber;
 
 import static com.qmetry.qaf.automation.core.ConfigurationManager.getBundle;
-import static com.qmetry.qaf.automation.data.MetaDataScanner.applyMetaRule;
+import static com.qmetry.qaf.automation.data.MetaDataScanner.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -218,6 +218,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 						Reporter.log(result, MessageTypes.Fail);
 					}
 				}
+				formatMetaData(bdd2Pickle.getMetaData());
 				QAFTestBase stb = TestBaseProvider.instance().get();
 				final List<CheckpointResultBean> checkpoints = new ArrayList<CheckpointResultBean>(
 						stb.getCheckPointResults());
