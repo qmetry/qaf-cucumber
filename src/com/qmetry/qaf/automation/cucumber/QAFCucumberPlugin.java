@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 
+import com.qmetry.qaf.automation.core.AutomationError;
 import com.qmetry.qaf.automation.core.CheckpointResultBean;
 import com.qmetry.qaf.automation.core.LoggingBean;
 import com.qmetry.qaf.automation.core.MessageTypes;
@@ -49,7 +50,8 @@ import io.cucumber.plugin.event.TestStepStarted;
 import io.cucumber.plugin.event.WriteEvent;
 
 /**
- * This is cucumber plugin need to be used when Cucumber runner is used. It will generate QAF JSON reports.
+ * This is cucumber plugin need to be used when Cucumber runner is used. It will
+ * generate QAF JSON reports.
  * 
  * @author chirag.jayswal
  *
@@ -112,12 +114,14 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		@Override
 		public void receive(TestStepFinished event) {
 			if (event.getTestStep() instanceof PickleStepTestStep) {
-				logStep((PickleStepTestStep) event.getTestStep(), event.getResult());
+				logStep((PickleStepTestStep) event.getTestStep(), event);
 			}
 		}
 
 		@SuppressWarnings("unchecked")
-		private void logStep(PickleStepTestStep testStep, Result result) {
+		private void logStep(PickleStepTestStep testStep, TestStepFinished event) {
+			;
+			Result result = event.getResult();
 			String stepText = testStep.getStep().getKeyWord() + testStep.getStepText();
 			Long duration = result.getDuration().toMillis();
 			QAFTestBase stb = TestBaseProvider.instance().get();
@@ -128,10 +132,14 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 				failureCheckpoint.setType(MessageTypes.Fail);
 				stb.getCheckPointResults().add(failureCheckpoint);
 			}
+			if(result.getStatus().is(Status.UNDEFINED)) {
+				stepText = stepText+": Not Found";
+				stb.addVerificationError("Step not found");
+			}
 
 			MessageTypes type = result.getStatus().is(Status.PASSED)
 					&& getStepMessageType(stb.getCheckPointResults()).isFailure() ? MessageTypes.TestStepFail
-							: getStepMessageType(result.getStatus());
+							: getStepMessageType(result.getStatus(), isDryRun(event.getTestCase()));
 			// MessageTypes type = success? getStepMessageType(stb.getCheckPointResults()) :
 			// MessageTypes.;
 
@@ -178,7 +186,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			return type;
 		}
 
-		private MessageTypes getStepMessageType(io.cucumber.plugin.event.Status status) {
+		private MessageTypes getStepMessageType(io.cucumber.plugin.event.Status status, boolean isDryRun) {
 			switch (status) {
 			case PASSED:
 				return MessageTypes.TestStepPass;
@@ -188,6 +196,9 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			case AMBIGUOUS:
 				return MessageTypes.Warn;
 			default:
+				if (isDryRun) {
+					return MessageTypes.TestStepPass;
+				}
 				return MessageTypes.TestStep;
 			}
 		}
@@ -206,6 +217,10 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		}
 	};
 
+	private boolean isDryRun(TestCase tc) {
+		return (boolean) getField("dryRun", tc);
+	}
+
 	private EventHandler<TestCaseFinished> tcfinishedHandler = new EventHandler<TestCaseFinished>() {
 
 		@Override
@@ -213,22 +228,36 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			try {
 				TestCase tc = event.getTestCase();
 				Bdd2Pickle bdd2Pickle = getBdd2Pickle(tc);
-				boolean isDryRun = (boolean) getField("dryRun", tc);
+				boolean isDryRun = isDryRun(tc);
+				Result result = event.getResult();
+
+				Throwable throwable = result.getError();
+				QAFTestBase stb = TestBaseProvider.instance().get();
+
 				if (isDryRun) {
 					Map<String, Object> metadata = new HashMap<String, Object>(bdd2Pickle.getMetaData());
-					metadata.putAll(bdd2Pickle.getTestData());
-					String result = applyMetaRule(metadata);
-					if (StringUtil.isNotBlank(result)) {
-						Reporter.log(result, MessageTypes.Fail);
+					if (null != bdd2Pickle.getTestData()) {
+						metadata.putAll(bdd2Pickle.getTestData());
+					}
+					String vresult = applyMetaRule(metadata);
+					if (StringUtil.isNotBlank(vresult)) {
+						throwable = new AutomationError("Metadata rule failure:" + vresult);
+						stb.addVerificationError(throwable);
 					}
 				}
-				QAFTestBase stb = TestBaseProvider.instance().get();
 				final List<CheckpointResultBean> checkpoints = new ArrayList<CheckpointResultBean>(
 						stb.getCheckPointResults());
 				final List<LoggingBean> logs = new ArrayList<LoggingBean>(stb.getLog());
-				Result result = event.getResult();
-				if (stb.getVerificationErrors() > 0 && result.getStatus().is(Status.PASSED)) {
-					result = new Result(Status.FAILED, result.getDuration(), result.getError());
+
+				if (stb.getVerificationErrors() > 0 && (result.getStatus().is(Status.PASSED)||isDryRun)) {
+					
+					result = new Result(Status.FAILED, result.getDuration(), throwable);
+					try {
+						ClassUtil.setField("result", event, result);
+					} catch (Exception e) {
+					}
+				}else if(isDryRun && (null==throwable)) {
+					result = new Result(Status.PASSED, result.getDuration(), throwable);
 					try {
 						ClassUtil.setField("result", event, result);
 					} catch (Exception e) {
@@ -265,7 +294,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 					params.put("duration", eventresult.getDuration().toMillis());
 
 					// Bdd2Pickle bdd2Pickle = getBdd2Pickle(event.getTestCase());
-					if (null != bdd2Pickle) {
+					if (null != bdd2Pickle && null != bdd2Pickle.getMetaData()) {
 						params.putAll(bdd2Pickle.getMetaData());
 						Map<String, Object> testData = bdd2Pickle.getTestData();
 						if (testData != null) {
