@@ -30,6 +30,8 @@ import io.cucumber.core.backend.StepDefinition;
 import io.cucumber.datatable.DataTable;
 
 /**
+ * This is a wrapper class for cucumber step implementation. This class will be
+ * used when QAF BDD factory is used as runner.
  * 
  * @author chirag.jayswal
  *
@@ -70,15 +72,15 @@ public class CucumberStep extends BaseTestStep {
 			Object[] args = processArgs(s.parameterInfos(), actualArgs);
 
 			s.execute(args);
-		}catch (CucumberInvocationTargetException cie) {
-			//e.printStackTrace();
-			AutomationError ae = new AutomationError(cie.getInvocationTargetExceptionCause()+"-"+s.getLocation(), cie.getInvocationTargetExceptionCause());
+		} catch (CucumberInvocationTargetException cie) {
+			// e.printStackTrace();
+			AutomationError ae = new AutomationError(cie.getInvocationTargetExceptionCause() + "-" + s.getLocation(),
+					cie.getInvocationTargetExceptionCause());
 			ae.setStackTrace(cie.getInvocationTargetExceptionCause().getStackTrace());
 
 			throw ae;
-		}
-		catch (Exception e) {
-			//e.printStackTrace();
+		} catch (Exception e) {
+			// e.printStackTrace();
 			throw new AutomationError(s.getLocation(), e.getCause());
 		}
 		return null;
@@ -118,8 +120,9 @@ public class CucumberStep extends BaseTestStep {
 				formatter = new DataTableFormattor();
 			}
 			params[i] = formatter.format(params[i], context);
-			if(!params[i].getClass().isAssignableFrom((Class<?>)paramType) && String.class.isAssignableFrom((Class<?>)paramType)) {
-				params[i] =  new Gson().toJson(params[i]);
+			if (!params[i].getClass().isAssignableFrom((Class<?>) paramType)
+					&& String.class.isAssignableFrom((Class<?>) paramType)) {
+				params[i] = new Gson().toJson(params[i]);
 			}
 
 		}

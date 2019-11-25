@@ -43,6 +43,7 @@ import io.cucumber.plugin.event.Result;
 import io.cucumber.plugin.event.TestCase;
 
 /**
+ * Utility class for QAF reporting used by cucumber plugin.
  * @author chirag.jayswal
  *
  */

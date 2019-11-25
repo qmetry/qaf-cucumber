@@ -27,6 +27,9 @@ import io.cucumber.core.backend.Snippet;
 import io.cucumber.datatable.DataTable;
 
 /**
+ * QAF Backend for cucumber. This class will be used only when cucumber runner
+ * used to run BDD.
+ * 
  * @author chirag.jayswal
  *
  */

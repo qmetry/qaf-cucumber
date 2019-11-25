@@ -5,7 +5,6 @@ import org.apache.commons.logging.impl.LogFactoryImpl;
 
 import com.qmetry.qaf.automation.step.DefaultObjectFactory;
 import com.qmetry.qaf.automation.step.ObjectFactory;
-import com.qmetry.qaf.automation.testng.report.ReporterUtil;
 
 import io.cucumber.core.runtime.ObjectFactorySupplier;
 

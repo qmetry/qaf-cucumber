@@ -49,6 +49,8 @@ import io.cucumber.plugin.event.TestStepStarted;
 import io.cucumber.plugin.event.WriteEvent;
 
 /**
+ * This is cucumber plugin need to be used when Cucumber runner is used. It will generate QAF JSON reports.
+ * 
  * @author chirag.jayswal
  *
  */
@@ -136,8 +138,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			LoggingBean stepLogBean = new LoggingBean(testStep.getPattern(),
 					testStep.getDefinitionArgument().stream().map(a -> {
 						return a.getValue();
-					}).collect(Collectors.toList()).toArray(new String[] {}),
-					result.getStatus().name());
+					}).collect(Collectors.toList()).toArray(new String[] {}), result.getStatus().name());
 			stepLogBean.setSubLogs(new ArrayList<LoggingBean>(stb.getLog()));
 
 			CheckpointResultBean stepResultBean = new CheckpointResultBean();
@@ -216,7 +217,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 				if (isDryRun) {
 					Map<String, Object> metadata = new HashMap<String, Object>(bdd2Pickle.getMetaData());
 					metadata.putAll(bdd2Pickle.getTestData());
-					String result = applyMetaRule(metadata );
+					String result = applyMetaRule(metadata);
 					if (StringUtil.isNotBlank(result)) {
 						Reporter.log(result, MessageTypes.Fail);
 					}

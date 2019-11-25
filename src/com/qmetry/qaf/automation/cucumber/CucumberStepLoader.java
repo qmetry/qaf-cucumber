@@ -12,6 +12,7 @@ import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
 /**
+ * This class will be used when QAF BDD factory is used as runner.
  * 
  * @author chirag.jayswal
  *
