@@ -118,6 +118,9 @@ public class CucumberStep extends BaseTestStep {
 				formatter = new DataTableFormattor();
 			}
 			params[i] = formatter.format(params[i], context);
+			if(!params[i].getClass().isAssignableFrom((Class<?>)paramType) && String.class.isAssignableFrom((Class<?>)paramType)) {
+				params[i] =  new Gson().toJson(params[i]);
+			}
 
 		}
 		return params;

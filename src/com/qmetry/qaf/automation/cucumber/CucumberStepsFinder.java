@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import com.qmetry.qaf.automation.core.TestBaseProvider;
 import com.qmetry.qaf.automation.keys.ApplicationProperties;
+import com.qmetry.qaf.automation.step.ObjectFactory;
 
 import io.cucumber.core.backend.Backend;
 import io.cucumber.core.backend.DataTableTypeDefinition;
@@ -33,6 +34,10 @@ import io.cucumber.core.runtime.ObjectFactorySupplier;
 import io.cucumber.core.runtime.ThreadLocalObjectFactorySupplier;
 
 /**
+ * This class will be used to load cucumber steps when running your BDD with QAF
+ * BDD Factory. If you are not using cucumber steps or running with Cucumber
+ * runner this class will not have any effect. If you have added any object
+ * factory dependency, it will use that object factory.
  * 
  * @author chirag.jayswal
  *
@@ -96,12 +101,11 @@ public class CucumberStepsFinder implements Glue {
 
 	}
 
-
 	public static void buildBackendWorlds() {
 		try {
 			Collection<? extends Backend> backends = getBackends();
 			objectFactorySupplier.get().start();
-			//Lambda expressions get loaded during buildWorld instead of loadGlue method
+			// Lambda expressions get loaded during buildWorld instead of loadGlue method
 			for (Backend backend : backends) {
 				backend.buildWorld();
 			}
@@ -115,6 +119,7 @@ public class CucumberStepsFinder implements Glue {
 			Collection<? extends Backend> backends = getBackends();
 			for (Backend backend : backends) {
 				backend.disposeWorld();
+
 			}
 			objectFactorySupplier.get().stop();
 		} catch (Exception e) {
@@ -128,18 +133,22 @@ public class CucumberStepsFinder implements Glue {
 				.getContext().getObject(CUCUMBER_BACKENDS);
 		if (null == backends) {
 			backends = new BackendServiceLoader(() -> Thread.currentThread().getContextClassLoader(),
-					objectFactorySupplier).get().stream().filter(b->!(b instanceof QAFBackend)).collect(Collectors.toList());
-	
+					objectFactorySupplier).get().stream().filter(b -> !(b instanceof QAFBackend))
+							.collect(Collectors.toList());
+
 			TestBaseProvider.instance().get().getContext().setProperty(CUCUMBER_BACKENDS, backends);
 			CucumberStepsFinder glue = new CucumberStepsFinder();
 			TestBaseProvider.instance().get().getContext().setProperty(CUCUMBER_GLUE, glue);
-
 			List<URI> uris = new ArrayList<URI>();
 			for (String pkg : getBundle().getStringArray(ApplicationProperties.STEP_PROVIDER_PKG.key)) {
 				uris.add(GluePath.parse(pkg));
 			}
 			for (Backend backend : getBackends()) {
 				backend.loadGlue(glue, uris);
+			}
+			if (!(objectFactorySupplier.get().getClass().getName().endsWith("DefaultJavaObjectFactory"))) {
+				ObjectFactory objFactoryImpl = new ObjectFactoryImpl(objectFactorySupplier);
+				ObjectFactory.INSTANCE.setFactory(objFactoryImpl);
 			}
 		}
 		return backends;

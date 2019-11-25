@@ -11,10 +11,13 @@ import static java.util.Collections.unmodifiableList;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+
+import org.json.JSONObject;
 
 import com.qmetry.qaf.automation.testng.dataprovider.QAFInetrceptableDataProvider;
 import com.qmetry.qaf.automation.util.StringUtil;
@@ -240,18 +243,17 @@ public class Bdd2Compiler {
 
 	private String interpolate(String name, List<TableCell> variableCells, List<TableCell> valueCells) {
 		int col = 0;
-		StringBuffer row = new StringBuffer("{");
+		Map<String, Object> row = new HashMap<String, Object>();
 		for (TableCell variableCell : variableCells) {
 			TableCell valueCell = valueCells.get(col++);
 			String header = variableCell.getValue();
 			String value = valueCell.getValue();
 			name = name.replace("<" + header + ">", value);
 			name = name.replace("${" + header + "}", value);
-			row.append("'").append(header).append("':'").append(value).append("',");
+			row.put(header, value);
 		}
-		row.deleteCharAt(row.lastIndexOf(",")).append("}");
-		
-		name = name.replace("${args[0]}", row );
+		name = name.replace("\"${args[0]}\"", JSONObject.quote(JSONObject.valueToString(row)));
+		name = name.replace("${args[0]}", JSONObject.valueToString(row) );
 		return name;
 	}
 
