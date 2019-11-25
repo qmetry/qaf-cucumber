@@ -134,7 +134,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			}
 			if(result.getStatus().is(Status.UNDEFINED)) {
 				stepText = stepText+": Not Found";
-				stb.addVerificationError("Step not found");
+				stb.addVerificationError(event.getTestStep().getCodeLocation() + "TestStep implementation not found");
 			}
 
 			MessageTypes type = result.getStatus().is(Status.PASSED)
@@ -251,7 +251,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 
 				if (stb.getVerificationErrors() > 0 && (result.getStatus().is(Status.PASSED)||isDryRun)) {
 					
-					result = new Result(Status.FAILED, result.getDuration(), throwable);
+					result = new Result(null!=throwable?result.getStatus():Status.FAILED, result.getDuration(), throwable);
 					try {
 						ClassUtil.setField("result", event, result);
 					} catch (Exception e) {
