@@ -48,7 +48,6 @@ import cucumber.api.event.TestRunStarted;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
 import cucumber.api.event.WriteEvent;
-import io.cucumber.core.event.Status;
 
 /**
  * This is cucumber plugin need to be used when Cucumber runner is used. It will
@@ -132,12 +131,12 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 				failureCheckpoint.setType(MessageTypes.Fail);
 				stb.getCheckPointResults().add(failureCheckpoint);
 			}
-			if(result.getStatus().equals(Status.UNDEFINED)) {
+			if(result.getStatus().equals(Type.UNDEFINED)) {
 				stepText = stepText+": Not Found";
 				stb.addVerificationError(event.testStep.getCodeLocation() + "TestStep implementation not found");
 			}
 
-			MessageTypes type = result.getStatus().equals(Status.PASSED)
+			MessageTypes type = result.getStatus().equals(Type.PASSED)
 					&& getStepMessageType(stb.getCheckPointResults()).isFailure() ? MessageTypes.TestStepFail
 							: getStepMessageType(result.getStatus(), isDryRun(event.getTestCase()));
 			// MessageTypes type = success? getStepMessageType(stb.getCheckPointResults()) :
