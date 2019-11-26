@@ -1,5 +1,5 @@
-# qaf-cucumber
-This plug-in can be used with cucumber runner and all QAF BDD2 features
+# qaf-cucumber4
+This plug-in can be used with cucumber4 runner and all QAF BDD2 features
  
 ## How to use
 Add [dependency](https://mvnrepository.com/artifact/com.qmetry/qaf-cucumber4/2.1.15-beta-1) in your project.
@@ -13,19 +13,24 @@ Add QAF 2.1.15 dependency
 ### Maven
 ```
 <!-- https://mvnrepository.com/artifact/com.qmetry/qaf-cucumber -->
-<dependency>
+<dependencies>
+ <dependency>
     <groupId>com.qmetry</groupId>
     <artifactId>qaf-cucumber</artifactId>
     <version>2.1.15</version>
-</dependency>
-<dependency>
+ </dependency>
+ <dependency>
     <groupId>com.qmetry</groupId>
     <artifactId>qaf-cucumber</artifactId>
     <version>2.1.15-beta-1</version>
-</dependency>
+ </dependency>
+ <!--   keep this at top, other dependencies goes below. -->
+ 
 ```
  
 This plug-in will work with cucumber 4. 
+**Important: make suer to put dependency befor other cucumner dependencies.**
+
 ### Why BDD2 syntax
 `BDD2` is super set of `Gherkin` syntax. Following are **additional features** in `BDD2` in addition to `Gherkin`:
  * Custom Meta-Data
