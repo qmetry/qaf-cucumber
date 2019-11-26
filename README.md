@@ -7,8 +7,8 @@ Add QAF 2.1.15 dependency
 ### IVY
 ```
 <!-- https://mvnrepository.com/artifact/com.qmetry/qaf-cucumber -->
-<dependency org="com.qmetry" name="qaf-cucumber" rev="2.1.15"/>
-<dependency org="com.qmetry" name="qaf-cucumber" rev="version"/>
+<dependency org="com.qmetry" name="qaf" rev="2.1.15"/>
+<dependency org="com.qmetry" name="qaf-cucumber" rev="2.1.15-beta-1"/>
 ```
 ### Maven
 ```
@@ -21,7 +21,7 @@ Add QAF 2.1.15 dependency
 <dependency>
     <groupId>com.qmetry</groupId>
     <artifactId>qaf-cucumber</artifactId>
-    <version>version</version>
+    <version>2.1.15-beta-1</version>
 </dependency>
 ```
  
