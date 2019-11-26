@@ -39,8 +39,11 @@ import com.qmetry.qaf.automation.util.DateUtil;
 import com.qmetry.qaf.automation.util.FileUtil;
 import com.qmetry.qaf.automation.util.StringUtil;
 
-import io.cucumber.plugin.event.Result;
-import io.cucumber.plugin.event.TestCase;
+import cucumber.api.Result;
+import cucumber.api.TestCase;
+
+//import io.cucumber.plugin.event.Result;
+//import io.cucumber.plugin.event.TestCase;
 
 /**
  * Utility class for QAF reporting used by cucumber plugin.
@@ -250,8 +253,8 @@ public class QAFReporter {
 		ClassInfo classInfo = getJsonObjectFromFile(file, ClassInfo.class);
 
 		MethodInfo methodInfo = new MethodInfo();
-		methodInfo.setStartTime(System.currentTimeMillis() - result.getDuration().toMillis());
-		methodInfo.setDuration(result.getDuration().toMillis());
+		methodInfo.setStartTime(System.currentTimeMillis() - result.getDuration());
+		methodInfo.setDuration(result.getDuration());
 
 		Map<String, Object> metadata = bdd2Pickle.getMetaData();
 		if (null != bdd2Pickle.getTestData()) {
