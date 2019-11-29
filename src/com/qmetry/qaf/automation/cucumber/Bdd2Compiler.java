@@ -11,6 +11,7 @@ import static java.util.Collections.unmodifiableList;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 import org.json.JSONObject;
 
+import com.qmetry.qaf.automation.core.AutomationError;
 import com.qmetry.qaf.automation.testng.dataprovider.QAFInetrceptableDataProvider;
 import com.qmetry.qaf.automation.util.StringUtil;
 
@@ -47,6 +49,7 @@ import gherkin.pickles.PickleStep;
 import gherkin.pickles.PickleString;
 import gherkin.pickles.PickleTable;
 import gherkin.pickles.PickleTag;
+
 /**
  * 
  * @author chirag.jayswal
@@ -76,7 +79,7 @@ public class Bdd2Compiler {
 						ScenarioOutline outline = new ScenarioOutline(((Scenario) scenarioDefinition).getTags(),
 								scenarioDefinition.getLocation(), scenarioDefinition.getKeyword(),
 								scenarioDefinition.getName(), scenarioDefinition.getDescription(),
-								scenarioDefinition.getSteps(), null);
+								scenarioDefinition.getSteps(), Collections.emptyList());
 						compileScenarioOutline(pickles, backgroundSteps, outline, featureTags, language, metadata);
 					} else {
 						compileScenario(pickles, backgroundSteps, (Scenario) scenarioDefinition, featureTags, language,
@@ -119,7 +122,7 @@ public class Bdd2Compiler {
 		scenariotags.addAll(featureTags);
 		scenariotags.addAll(scenarioOutline.getTags());
 		List<Examples> examplesToUse = getExamples(metadata, scenarioOutline);
-		
+
 		for (final Examples examples : examplesToUse) {
 			if (examples.getTableHeader() == null)
 				continue;
@@ -130,7 +133,6 @@ public class Bdd2Compiler {
 				List<PickleStep> steps = new ArrayList<>();
 				if (!scenarioOutline.getSteps().isEmpty())
 					steps.addAll(backgroundSteps);
-
 
 				for (Step scenarioOutlineStep : scenarioOutline.getSteps()) {
 					String stepText = interpolate(scenarioOutlineStep.getText(), variableCells, valueCells);
@@ -147,7 +149,7 @@ public class Bdd2Compiler {
 				Pickle pickle = new Bdd2Pickle(interpolate(scenarioOutline.getName(), variableCells, valueCells),
 						language, steps, pickleTags(tags),
 						asList(pickleLocation(values.getLocation()), pickleLocation(scenarioOutline.getLocation())),
-						examples.getTableHeader().getCells(), valueCells,  getMetaData(metadata, examples.getTags()));
+						examples.getTableHeader().getCells(), valueCells, getMetaData(metadata, examples.getTags()));
 
 				pickles.add(pickle);
 			}
@@ -156,7 +158,7 @@ public class Bdd2Compiler {
 
 	@SuppressWarnings("unchecked")
 	private List<Examples> getExamples(Map<String, Object> metadata, ScenarioOutline scenarioOutline) {
-		if (!hasDP(metadata)) {
+		if (null==metadata || !hasDP(metadata)) {
 			return scenarioOutline.getExamples();
 		}
 
@@ -165,12 +167,13 @@ public class Bdd2Compiler {
 		Location location = scenarioOutline.getLocation();
 
 		try {
+			
 			externalData = Arrays.asList(QAFInetrceptableDataProvider.getData(metadata));
 		} catch (Exception e) {
 			if ("No data provider found".equalsIgnoreCase(e.getMessage())) {
 				return scenarioOutline.getExamples();
 			}
-			// throw new AutomationError(e);
+			 throw new AutomationError(e.getMessage() + ":" + scenarioOutline.getName());
 		}
 
 		if (null == externalData) {
@@ -253,7 +256,7 @@ public class Bdd2Compiler {
 			row.put(header, value);
 		}
 		name = name.replace("\"${args[0]}\"", JSONObject.quote(JSONObject.valueToString(row)));
-		name = name.replace("${args[0]}", JSONObject.valueToString(row) );
+		name = name.replace("${args[0]}", JSONObject.valueToString(row));
 		return name;
 	}
 
