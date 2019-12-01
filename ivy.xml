@@ -12,7 +12,7 @@
 <ivy-module version="2.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
-	<info organisation="com.qmetry" module="qaf-cucumber" status="integration">
+	<info organisation="com.qmetry" module="qaf-cucumber4" status="integration">
 	</info>
 		<configurations>
         <conf name="compile"  description="Required to compile application"/>

@@ -92,7 +92,7 @@
 	</target>
 	<target name="make-jar" depends="clean, compile" description="build basic version">
 		<mkdir dir="${dist.dir}" />
-		<jar destfile="${dist.dir}/qaf-cucumber.jar" basedir="${bin.dir}">
+		<jar destfile="${dist.dir}/${ivy.module}.jar" basedir="${bin.dir}">
 			<metainf dir="." includes="LICENSE.txt" />
 			<metainf dir="." includes="${dist.dir}/pom.xml,${dist.dir}/pom.properties" />
 
@@ -122,12 +122,12 @@
 
 		<mkdir dir="${dist.dir}/docs" />
 		<javadoc sourcepath="${src.dir}" destdir="${dist.dir}/docs" />
-		<jar compress="true" destfile="${dist.dir}/qaf-cucumber-javadoc.jar" basedir="${dist.dir}/docs" />
+		<jar compress="true" destfile="${dist.dir}/${ivy.module}-javadoc.jar" basedir="${dist.dir}/docs" />
 		<delete dir="${dist.dir}/docs">
 		</delete>
 	</target>
 	<target name="gensource" description="Generate Source" depends="init">
-		<jar destfile="${dist.dir}/qaf-cucumber-sources.jar" basedir="${src.dir}">
+		<jar destfile="${dist.dir}/${ivy.module}-sources.jar" basedir="${src.dir}">
 			<metainf dir="." includes="LICENSE" />
 			<manifest>
 				<attribute name="Vendor" value="Infostretch Corp." />
