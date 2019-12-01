@@ -59,13 +59,7 @@ import cucumber.api.event.WriteEvent;
 public class QAFCucumberPlugin implements ConcurrentEventListener {
 	private static final Log logger = LogFactoryImpl.getLog(QAFCucumberPlugin.class);
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @s() { }ee
-	 * io.cucumber.plugin.ConcurrentEventListener#setEventPublisher(io.cucumber.
-	 * plugin.event.EventPublisher)
-	 */
+	
 	@Override
 	public void setEventPublisher(EventPublisher publisher) {
 		setCucumberRunner(true);
@@ -134,6 +128,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			if(result.getStatus().equals(Type.UNDEFINED)) {
 				stepText = stepText+": Not Found";
 				stb.addVerificationError(event.testStep.getCodeLocation() + "TestStep implementation not found");
+
 			}
 
 			MessageTypes type = result.getStatus().equals(Type.PASSED)
@@ -251,6 +246,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 				if (stb.getVerificationErrors() > 0 && (result.getStatus().equals(Type.PASSED)||isDryRun)) {
 					
 					result = new Result(null!=throwable?result.getStatus():Type.FAILED, result.getDuration(), throwable);
+
 					try {
 						ClassUtil.setField("result", event, result);
 					} catch (Exception e) {
@@ -262,7 +258,10 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 					} catch (Exception e) {
 					}
 				}
-				QAFReporter.createMethodResult(tc, bdd2Pickle, result, logs, checkpoints);
+				String className = tc.getScenarioDesignation()
+						.substring(0, tc.getScenarioDesignation().indexOf(".feature")).replaceAll("/", ".");
+				QAFReporter.createMethodResult(className, bdd2Pickle, result.getDuration(),
+						result.getStatus().name(), result.getError(), logs, checkpoints);
 				if (!isDryRun) {
 					deployResult(bdd2Pickle, tc, result);
 				}

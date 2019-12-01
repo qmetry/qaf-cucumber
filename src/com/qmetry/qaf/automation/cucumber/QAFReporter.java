@@ -39,12 +39,6 @@ import com.qmetry.qaf.automation.util.DateUtil;
 import com.qmetry.qaf.automation.util.FileUtil;
 import com.qmetry.qaf.automation.util.StringUtil;
 
-import cucumber.api.Result;
-import cucumber.api.TestCase;
-
-//import io.cucumber.plugin.event.Result;
-//import io.cucumber.plugin.event.TestCase;
-
 /**
  * Utility class for QAF reporting used by cucumber plugin.
  * @author chirag.jayswal
@@ -196,19 +190,19 @@ public class QAFReporter {
 	 * @param bdd2Pickle
 	 * @param result
 	 */
-	public static void createMethodResult(TestCase tc, Bdd2Pickle bdd2Pickle, Result result, List<LoggingBean> logs,
+	public static void createMethodResult(String className, Bdd2Pickle bdd2Pickle, long durationMs, String result, Throwable error, List<LoggingBean> logs,
 			List<CheckpointResultBean> checkpoints) {
 
 		try {
-			String className = tc.getScenarioDesignation().substring(0, tc.getScenarioDesignation().indexOf(".feature"))
-					.replaceAll("/", ".");
+			//String className = tc.getScenarioDesignation().substring(0, tc.getScenarioDesignation().indexOf(".feature"))
+			//		.replaceAll("/", ".");
 			String classdir = getClassDir(getTestName() + "/" + className);
 
 			MethodResult methodResult = new MethodResult();
 
 			methodResult.setSeleniumLog(logs);
 			methodResult.setCheckPoints(checkpoints);
-			methodResult.setThrowable(result.getError());
+			methodResult.setThrowable(error);
 			// TODO::
 			// updateOverview(tc, bdd2Pickle);
 			String fileName = getMethodIdentifier(bdd2Pickle);// StringUtil.toTitleCaseIdentifier(getMethodName(result));
@@ -225,9 +219,9 @@ public class QAFReporter {
 				// add updated file name as 'resultFileName' key in metaData
 				methodResultFile = classdir + "/" + fileName;
 
-				updateClassMetaInfo(tc, bdd2Pickle, result, fileName, className);
+				updateClassMetaInfo(bdd2Pickle, durationMs, result, fileName, className);
 			} else {
-				updateClassMetaInfo(tc, bdd2Pickle, result, fileName, className);
+				updateClassMetaInfo( bdd2Pickle, durationMs, result, fileName, className);
 			}
 
 			writeJsonObjectToFile(methodResultFile + ".json", methodResult);
@@ -244,7 +238,7 @@ public class QAFReporter {
 	 * @param result
 	 * @param dir2
 	 */
-	private static synchronized void updateClassMetaInfo(TestCase tc, Bdd2Pickle bdd2Pickle, Result result,
+	private static synchronized void updateClassMetaInfo(Bdd2Pickle bdd2Pickle, long durationMs, String result,
 			String methodfname, String classname) {
 		String dir = getClassDir(getTestName() + "/" + classname);
 		String file = dir + "/meta-info.json";
@@ -253,8 +247,9 @@ public class QAFReporter {
 		ClassInfo classInfo = getJsonObjectFromFile(file, ClassInfo.class);
 
 		MethodInfo methodInfo = new MethodInfo();
-		methodInfo.setStartTime(System.currentTimeMillis() - result.getDuration());
-		methodInfo.setDuration(result.getDuration());
+
+		methodInfo.setStartTime(System.currentTimeMillis() - durationMs);
+		methodInfo.setDuration(durationMs);
 
 		Map<String, Object> metadata = bdd2Pickle.getMetaData();
 		if (null != bdd2Pickle.getTestData()) {
@@ -296,8 +291,9 @@ public class QAFReporter {
 		if (bdd2Pickle.getTestData() != null) {
 			metadata.putAll(bdd2Pickle.getTestData());
 		}
-		if (metadata.containsKey(identifierKey)) {
-			id = metadata.get(identifierKey).toString();
+		String idFromMetaData = metadata.getOrDefault(identifierKey,"").toString();
+		if (StringUtil.isNotBlank(idFromMetaData) ) {
+			id = idFromMetaData;
 		}
 		id = StringUtil.toTitleCaseIdentifier(id);
 
@@ -327,12 +323,12 @@ public class QAFReporter {
 		writeJsonObjectToFile(file, metaInfo);
 	}
 
-	private static String getResult(Result result) {
-		switch (result.getStatus()) {
-		case PASSED:
+	private static String getResult(String result) {
+		switch (result.toUpperCase().charAt(0)) {
+		case 'P':
 			passCnt.incrementAndGet();
 			return "pass";
-		case FAILED:
+		case 'F':
 			failCnt.incrementAndGet();
 			return "fail";
 		default:
