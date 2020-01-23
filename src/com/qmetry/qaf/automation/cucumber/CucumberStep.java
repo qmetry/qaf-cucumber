@@ -131,7 +131,7 @@ public class CucumberStep extends BaseTestStep {
 
 	static class DataTableFormattor implements QAFTestStepArgumentFormatter<Object> {
 		private static final Gson gson = new GsonBuilder().setDateFormat("dd-MM-yyyy")
-				.registerTypeAdapter(ObjectWrapper.class, new GsonDeserializerObjectWrapper()).create();
+				.registerTypeAdapter(ObjectWrapper.class, new GsonDeserializerObjectWrapper(Object.class)).create();
 
 		@Override
 		public Object format(Object value, Map<String, Object> context) {
