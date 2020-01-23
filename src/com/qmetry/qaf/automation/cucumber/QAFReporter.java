@@ -183,12 +183,17 @@ public class QAFReporter {
 		return newMap;
 	}
 
+
 	/**
 	 * should be called on test method completion
-	 * 
-	 * @param tc
+
+	 * @param className
 	 * @param bdd2Pickle
+	 * @param durationMs
 	 * @param result
+	 * @param error
+	 * @param logs
+	 * @param checkpoints
 	 */
 	public static void createMethodResult(String className, Bdd2Pickle bdd2Pickle, long durationMs, String result, Throwable error, List<LoggingBean> logs,
 			List<CheckpointResultBean> checkpoints) {

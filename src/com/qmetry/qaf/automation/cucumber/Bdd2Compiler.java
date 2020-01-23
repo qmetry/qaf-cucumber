@@ -22,7 +22,7 @@ import org.json.JSONObject;
 
 import com.qmetry.qaf.automation.core.AutomationError;
 import com.qmetry.qaf.automation.testng.dataprovider.QAFInetrceptableDataProvider;
-import com.qmetry.qaf.automation.util.StringUtil;
+import com.qmetry.qaf.automation.util.JSONUtil;
 
 import gherkin.SymbolCounter;
 import gherkin.ast.Background;
@@ -293,7 +293,7 @@ public class Bdd2Compiler {
 	private void addMetaData(Map<String, Object> metaData, List<Tag> tags) {
 		tags.stream().filter(tag -> tag.getName().contains(":")).forEach(tag -> {
 			String[] kv = tag.getName().substring(1).split(":", 2);
-			metaData.put(kv[0], StringUtil.toObject(getBundle().getSubstitutor().replace(kv[1])));
+			metaData.put(kv[0], JSONUtil.toObject(getBundle().getSubstitutor().replace(kv[1])));
 		});
 		@SuppressWarnings("unchecked")
 		List<String> groups = (List<String>) metaData.getOrDefault("groups", new ArrayList<String>());
