@@ -203,7 +203,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		@Override
 		public void receive(TestCaseStarted event) {
 			Bdd2Pickle bdd2Pickle = getBdd2Pickle(event.getTestCase());
-			bdd2Pickle.getMetaData().put("Referece", event.getTestCase().getUri());
+			bdd2Pickle.getMetaData().put("reference", event.getTestCase().getUri());
 			QAFTestBase stb = TestBaseProvider.instance().get();
 			stb.getLog().clear();
 			stb.clearVerificationErrors();
