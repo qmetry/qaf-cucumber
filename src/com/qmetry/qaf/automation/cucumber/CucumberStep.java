@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +20,7 @@ import com.google.gson.GsonBuilder;
 import com.qmetry.qaf.automation.core.AutomationError;
 import com.qmetry.qaf.automation.gson.GsonDeserializerObjectWrapper;
 import com.qmetry.qaf.automation.gson.ObjectWrapper;
+import com.qmetry.qaf.automation.step.BDDStepMatcherFactory.GherkinStepMatcher;
 import com.qmetry.qaf.automation.step.BaseTestStep;
 import com.qmetry.qaf.automation.step.QAFTestStepArgumentFormatter;
 import com.qmetry.qaf.automation.step.QAFTestStepArgumentFormatterImpl;
@@ -28,6 +30,9 @@ import com.qmetry.qaf.automation.util.ClassUtil;
 import io.cucumber.core.backend.CucumberInvocationTargetException;
 import io.cucumber.core.backend.ParameterInfo;
 import io.cucumber.core.backend.StepDefinition;
+import io.cucumber.cucumberexpressions.ExpressionFactory;
+import io.cucumber.cucumberexpressions.ParameterTypeRegistry;
+import io.cucumber.cucumberexpressions.RegularExpression;
 import io.cucumber.datatable.DataTable;
 
 /**
@@ -38,13 +43,19 @@ import io.cucumber.datatable.DataTable;
  *
  */
 public class CucumberStep extends BaseTestStep {
-	StepDefinition s;
+	private static final ExpressionFactory FACTORY = new ExpressionFactory(new ParameterTypeRegistry(Locale.ENGLISH));
+
+	private StepDefinition s;
 
 	public CucumberStep(StepDefinition s) {
 		super(s.toString(), getPattern(s));
 		this.s = s;
 
-		setStepMatcher(new CucumberStepMatcher());
+		if (FACTORY.createExpression(s.getPattern()) instanceof RegularExpression) {
+			setStepMatcher(new GherkinStepMatcher());
+		} else {
+			setStepMatcher(new CucumberStepMatcher());
+		}
 	}
 
 	private static String getPattern(StepDefinition s) {
