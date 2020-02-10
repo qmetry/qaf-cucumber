@@ -1,4 +1,4 @@
-package com.qmetry.qaf.automation.cucumber;
+package com.qmetry.qaf.automation.cucumber.bdd2.parser;
 
 import static com.qmetry.qaf.automation.core.ConfigurationManager.getBundle;
 import static com.qmetry.qaf.automation.data.MetaDataScanner.applyMetafilter;
@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.qmetry.qaf.automation.core.AutomationError;
@@ -66,11 +67,11 @@ public class Bdd2Compiler {
 
 		String language = feature.getLanguage();
 		List<Tag> featureTags = feature.getTags();
-		List<PickleStep> backgroundSteps = new ArrayList<>();
+		List<Step> backgroundSteps = new ArrayList<>();
 
 		for (ScenarioDefinition scenarioDefinition : feature.getChildren()) {
 			if (scenarioDefinition instanceof Background) {
-				backgroundSteps = pickleSteps(scenarioDefinition);
+				backgroundSteps =scenarioDefinition.getSteps(); //pickleSteps(scenarioDefinition);
 			} else if (scenarioDefinition instanceof Scenario) {
 				Map<String, Object> metadata = getMetaData(featureTags, ((Scenario) scenarioDefinition).getTags(),
 						pickleLocation(scenarioDefinition.getLocation()));
@@ -99,24 +100,24 @@ public class Bdd2Compiler {
 		return pickles;
 	}
 
-	private void compileScenario(List<Pickle> pickles, List<PickleStep> backgroundSteps, Scenario scenario,
+	private void compileScenario(List<Pickle> pickles, List<Step> backgroundSteps, Scenario scenario,
 			List<Tag> featureTags, String language, Map<String, Object> metadata) {
 		List<PickleStep> steps = new ArrayList<>();
 		if (!scenario.getSteps().isEmpty())
-			steps.addAll(backgroundSteps);
+			steps.addAll(pickleSteps(backgroundSteps));
 
 		List<Tag> scenarioTags = new ArrayList<>();
 		scenarioTags.addAll(featureTags);
 		scenarioTags.addAll(scenario.getTags());
 
-		steps.addAll(pickleSteps(scenario));
+		steps.addAll(pickleSteps(scenario.getSteps()));
 
 		Pickle pickle = new Bdd2Pickle(scenario.getName(), language, steps, pickleTags(scenarioTags),
 				singletonList(pickleLocation(scenario.getLocation())), metadata);
 		pickles.add(pickle);
 	}
 
-	private void compileScenarioOutline(List<Pickle> pickles, List<PickleStep> backgroundSteps,
+	private void compileScenarioOutline(List<Pickle> pickles, List<Step> backgroundSteps,
 			ScenarioOutline scenarioOutline, List<Tag> featureTags, String language, Map<String, Object> metadata) {
 		List<Tag> scenariotags = new ArrayList<>();
 		scenariotags.addAll(featureTags);
@@ -131,21 +132,25 @@ public class Bdd2Compiler {
 				List<TableCell> valueCells = values.getCells();
 
 				List<PickleStep> steps = new ArrayList<>();
-				if (!scenarioOutline.getSteps().isEmpty())
-					steps.addAll(backgroundSteps);
+				if (!scenarioOutline.getSteps().isEmpty()) {
+					//steps.addAll(backgroundSteps);
+					steps.addAll(pickleSteps(backgroundSteps, variableCells, valueCells, pickleLocation(values.getLocation())));
+				}
 
-				for (Step scenarioOutlineStep : scenarioOutline.getSteps()) {
+				steps.addAll(pickleSteps(scenarioOutline.getSteps(), variableCells, valueCells, pickleLocation(values.getLocation())));
+
+			/*	for (Step scenarioOutlineStep : scenarioOutline.getSteps()) {
 					String stepText = interpolate(scenarioOutlineStep.getText(), variableCells, valueCells);
 
 					PickleStep pickleStep = new PickleStep(stepText,
 							createPickleArguments(scenarioOutlineStep.getArgument(), variableCells, valueCells),
 							asList(pickleLocation(values.getLocation()), pickleStepLocation(scenarioOutlineStep)));
 					steps.add(pickleStep);
-				}
+				}*/
 
 				List<Tag> tags = new ArrayList<>(scenariotags);
 				tags.addAll(examples.getTags());
-				
+
 				Pickle pickle = new Bdd2Pickle(interpolate(scenarioOutline.getName(), variableCells, valueCells),
 						language, steps, pickleTags(tags),
 						asList(pickleLocation(values.getLocation()), pickleLocation(scenarioOutline.getLocation())),
@@ -158,7 +163,7 @@ public class Bdd2Compiler {
 
 	@SuppressWarnings("unchecked")
 	private List<Examples> getExamples(Map<String, Object> metadata, ScenarioOutline scenarioOutline) {
-		if (null==metadata || !hasDP(metadata)) {
+		if (null == metadata || !hasDP(metadata)) {
 			return scenarioOutline.getExamples();
 		}
 
@@ -167,13 +172,13 @@ public class Bdd2Compiler {
 		Location location = scenarioOutline.getLocation();
 
 		try {
-			
+
 			externalData = Arrays.asList(QAFInetrceptableDataProvider.getData(metadata));
 		} catch (Exception e) {
 			if ("No data provider found".equalsIgnoreCase(e.getMessage())) {
 				return scenarioOutline.getExamples();
 			}
-			 throw new AutomationError(e.getMessage() + ":" + scenarioOutline.getName());
+			throw new AutomationError(e.getMessage() + ":" + scenarioOutline.getName());
 		}
 
 		if (null == externalData) {
@@ -186,7 +191,7 @@ public class Bdd2Compiler {
 
 		List<TableRow> tableBody = externalData.stream().map(o -> {
 			return new TableRow(location, ((Map<String, Object>) o[0]).values().stream().map(val -> {
-				return new TableCell(location, val.toString());
+				return new TableCell(location, toString(val));
 			}).collect(Collectors.toList()));
 		}).collect(Collectors.toList());
 
@@ -231,9 +236,22 @@ public class Bdd2Compiler {
 		return result;
 	}
 
-	private List<PickleStep> pickleSteps(ScenarioDefinition scenarioDefinition) {
+	private List<PickleStep> pickleSteps(List<Step> scenarioDefinition, List<TableCell> variableCells, List<TableCell> valueCells, PickleLocation location) {
 		List<PickleStep> result = new ArrayList<>();
-		for (Step step : scenarioDefinition.getSteps()) {
+		for (Step step : scenarioDefinition) {
+				String stepText = interpolate(step.getText(), variableCells, valueCells);
+	
+				PickleStep pickleStep = new PickleStep(stepText,
+						createPickleArguments(step.getArgument(), variableCells, valueCells),
+						asList(location, pickleStepLocation(step)));
+				result.add(pickleStep);
+		}
+		return unmodifiableList(result);
+	}
+
+	private List<PickleStep> pickleSteps(List<Step> scenarioDefinition) {
+		List<PickleStep> result = new ArrayList<>();
+		for (Step step : scenarioDefinition) {
 			result.add(pickleStep(step));
 		}
 		return unmodifiableList(result);
@@ -243,7 +261,7 @@ public class Bdd2Compiler {
 		return new PickleStep(step.getText(), createPickleArguments(step.getArgument()),
 				singletonList(pickleStepLocation(step)));
 	}
-
+	
 	private String interpolate(String name, List<TableCell> variableCells, List<TableCell> valueCells) {
 		int col = 0;
 		Map<String, Object> row = new HashMap<String, Object>();
@@ -281,7 +299,6 @@ public class Bdd2Compiler {
 		return new PickleTag(pickleLocation(tag.getLocation()), tag.getName());
 	}
 
-
 	private Map<String, Object> getMetaData(List<Tag> featureTags, List<Tag> tags, PickleLocation pickleLocation) {
 		Map<String, Object> metaData = new TreeMap<String, Object>(String.CASE_INSENSITIVE_ORDER);
 		metaData.put("line", pickleLocation.getLine());
@@ -303,12 +320,22 @@ public class Bdd2Compiler {
 		});
 		metaData.put("groups", groups);
 	}
-	
+
 	private Map<String, Object> getMetaData(Map<String, Object> metaData, List<Tag> tags) {
 		Map<String, Object> metaDataToReturn = new TreeMap<String, Object>(String.CASE_INSENSITIVE_ORDER);
 		metaDataToReturn.putAll(metaData);
 		addMetaData(metaDataToReturn, tags);
 		return metaData;
+	}
+
+	private String toString(Object o) {
+		if (o instanceof Map) {
+			return JSONObject.valueToString(o);
+		}
+		if (o instanceof Collections) {
+			return new JSONArray(o).toString();
+		}
+		return String.valueOf(o);
 	}
 
 }

@@ -23,6 +23,7 @@ import com.qmetry.qaf.automation.step.BaseTestStep;
 import com.qmetry.qaf.automation.step.QAFTestStepArgumentFormatter;
 import com.qmetry.qaf.automation.step.QAFTestStepArgumentFormatterImpl;
 import com.qmetry.qaf.automation.step.TestStep;
+import com.qmetry.qaf.automation.util.ClassUtil;
 
 import io.cucumber.core.backend.CucumberInvocationTargetException;
 import io.cucumber.core.backend.ParameterInfo;
@@ -42,14 +43,21 @@ public class CucumberStep extends BaseTestStep {
 	public CucumberStep(StepDefinition s) {
 		super(s.toString(), getPattern(s));
 		this.s = s;
+
+		setStepMatcher(new CucumberStepMatcher());
 	}
 
 	private static String getPattern(StepDefinition s) {
 		String pattern = s.getPattern();
-		if (s.parameterInfos().isEmpty() || pattern.contains("{")) {
-			return pattern;
+		List<ParameterInfo> params = s.parameterInfos();
+		if (null != params && !params.isEmpty()) {
+			Type last = params.get(params.size() - 1).getType();
+			if (ClassUtil.isAssignableFrom(last, DataTable.class)) {
+				pattern = pattern + "{string}";
+			}
 		}
-		return pattern + "{0}";
+		// pattern = processEscapes(pattern);
+		return pattern;
 	}
 
 	@Override
@@ -116,6 +124,7 @@ public class CucumberStep extends BaseTestStep {
 			Type paramType = list.get(i).getType();
 			context.put("__paramType", paramType);
 			context.put("__paramIndex", i);
+
 			if (paramType.getTypeName().endsWith("DataTable")) {
 				formatter = new DataTableFormattor();
 			}
@@ -225,5 +234,4 @@ public class CucumberStep extends BaseTestStep {
 		}
 
 	}
-
 }

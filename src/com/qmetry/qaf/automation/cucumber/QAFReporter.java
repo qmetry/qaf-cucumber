@@ -26,6 +26,7 @@ import org.apache.commons.logging.impl.LogFactoryImpl;
 
 import com.qmetry.qaf.automation.core.CheckpointResultBean;
 import com.qmetry.qaf.automation.core.LoggingBean;
+import com.qmetry.qaf.automation.cucumber.bdd2.model.BDD2PickleWrapper;
 import com.qmetry.qaf.automation.keys.ApplicationProperties;
 import com.qmetry.qaf.automation.testng.report.ClassInfo;
 import com.qmetry.qaf.automation.testng.report.MetaInfo;
@@ -190,7 +191,7 @@ public class QAFReporter {
 	 * @param bdd2Pickle
 	 * @param result
 	 */
-	public static void createMethodResult(String className, Bdd2Pickle bdd2Pickle, long durationMs, String result, Throwable error, List<LoggingBean> logs,
+	public static void createMethodResult(String className, BDD2PickleWrapper bdd2Pickle, long durationMs, String result, Throwable error, List<LoggingBean> logs,
 			List<CheckpointResultBean> checkpoints) {
 
 		try {
@@ -238,7 +239,7 @@ public class QAFReporter {
 	 * @param result
 	 * @param dir2
 	 */
-	private static synchronized void updateClassMetaInfo(Bdd2Pickle bdd2Pickle, long durationMs, String result,
+	private static synchronized void updateClassMetaInfo(BDD2PickleWrapper bdd2Pickle, long durationMs, String result,
 			String methodfname, String classname) {
 		String dir = getClassDir(getTestName() + "/" + classname);
 		String file = dir + "/meta-info.json";
@@ -275,11 +276,11 @@ public class QAFReporter {
 		}
 	}
 
-	private static String getMethodName(Bdd2Pickle bdd2Pickle) {
+	private static String getMethodName(BDD2PickleWrapper bdd2Pickle) {
 		return bdd2Pickle.getName();
 	}
 
-	private static String getMethodIdentifier(Bdd2Pickle bdd2Pickle) {
+	private static String getMethodIdentifier(BDD2PickleWrapper bdd2Pickle) {
 
 		String id = getMethodName(bdd2Pickle);
 		String identifierKey = ApplicationProperties.TESTCASE_IDENTIFIER_KEY.getStringVal("testCaseId");

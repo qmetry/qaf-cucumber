@@ -4,7 +4,7 @@
 package com.qmetry.qaf.automation.cucumber;
 
 import static com.qmetry.qaf.automation.core.ConfigurationManager.getBundle;
-import static com.qmetry.qaf.automation.data.MetaDataScanner.*;
+import static com.qmetry.qaf.automation.data.MetaDataScanner.applyMetaRule;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -24,6 +24,7 @@ import com.qmetry.qaf.automation.core.LoggingBean;
 import com.qmetry.qaf.automation.core.MessageTypes;
 import com.qmetry.qaf.automation.core.QAFTestBase;
 import com.qmetry.qaf.automation.core.TestBaseProvider;
+import com.qmetry.qaf.automation.cucumber.bdd2.model.BDD2PickleWrapper;
 import com.qmetry.qaf.automation.integration.ResultUpdator;
 import com.qmetry.qaf.automation.integration.TestCaseResultUpdator;
 import com.qmetry.qaf.automation.integration.TestCaseRunResult;
@@ -116,7 +117,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		private void logStep(PickleStepTestStep testStep, TestStepFinished event) {
 			;
 			Result result = event.getResult();
-			String stepText = testStep.getStep().getKeyWord() + testStep.getStepText();
+			String stepText = testStep.getStep().getKeyWord() + testStep.getStep().getText();
 			Long duration = result.getDuration().toMillis();
 			QAFTestBase stb = TestBaseProvider.instance().get();
 
@@ -202,7 +203,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 
 		@Override
 		public void receive(TestCaseStarted event) {
-			Bdd2Pickle bdd2Pickle = getBdd2Pickle(event.getTestCase());
+			BDD2PickleWrapper bdd2Pickle = getBdd2Pickle(event.getTestCase());
 			bdd2Pickle.getMetaData().put("reference", event.getTestCase().getUri());
 			QAFTestBase stb = TestBaseProvider.instance().get();
 			stb.getLog().clear();
@@ -221,7 +222,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		public void receive(TestCaseFinished event) {
 			try {
 				TestCase tc = event.getTestCase();
-				Bdd2Pickle bdd2Pickle = getBdd2Pickle(tc);
+				BDD2PickleWrapper bdd2Pickle = getBdd2Pickle(tc);
 				boolean isDryRun = isDryRun(tc);
 				Result result = event.getResult();
 
@@ -274,7 +275,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			}
 		}
 
-		private void deployResult(Bdd2Pickle bdd2Pickle, TestCase tc, Result eventresult) {
+		private void deployResult(BDD2PickleWrapper bdd2Pickle, TestCase tc, Result eventresult) {
 			String updator = getBundle().getString("result.updator");
 			try {
 				if (StringUtil.isNotBlank(updator)) {
@@ -341,11 +342,11 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		}
 	};
 
-	private static Bdd2Pickle getBdd2Pickle(Object testCase) {
+	private static BDD2PickleWrapper getBdd2Pickle(Object testCase) {
 		try {
 			Object pickle = getField("pickle", testCase);
-			if (pickle instanceof Bdd2Pickle) {
-				return ((Bdd2Pickle) pickle);
+			if (pickle instanceof BDD2PickleWrapper) {
+				return ((BDD2PickleWrapper) pickle);
 			} else {
 				return getBdd2Pickle(pickle);
 			}

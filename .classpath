@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/qaf/build/artifacts/jars/qaf-sources.jar"/>
+	<classpathentry kind="lib" path="/qaf/build/artifacts/jars/qaf.jar" sourcepath="/qaf/src"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=qaf-cucumber&amp;ivyXmlPath=ivy.xml&amp;confs=*"/>
+	<classpathentry kind="src" path="test/src"/>
+	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=qaf-cucumber&amp;ivyXmlPath=ivy-test.xml&amp;confs=*&amp;ivySettingsPath=ivysettings.xml&amp;loadSettingsOnDemand=false&amp;ivyUserDir=&amp;propertyFiles="/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

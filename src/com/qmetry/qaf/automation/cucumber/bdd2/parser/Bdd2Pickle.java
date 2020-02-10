@@ -1,4 +1,4 @@
-package com.qmetry.qaf.automation.cucumber;
+package com.qmetry.qaf.automation.cucumber.bdd2.parser;
 
 import static com.qmetry.qaf.automation.data.MetaDataScanner.formatMetaData;
 
@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 import gherkin.ast.TableCell;
 import gherkin.pickles.Pickle;
@@ -26,7 +25,7 @@ public class Bdd2Pickle extends Pickle {
 
 	public Bdd2Pickle(String name, String language, List<PickleStep> steps, List<PickleTag> tags,
 			List<PickleLocation> locations, Map<String, Object> metaData) {
-		super(name, language, getBdd2Steps(steps), tags, locations);
+		super(name, language, steps, tags, locations);
 		initMetaData(metaData);
 	}
 
@@ -48,12 +47,6 @@ public class Bdd2Pickle extends Pickle {
 
 	public Map<String, Object> getTestData() {
 		return testData;
-	}
-
-	private static List<PickleStep> getBdd2Steps(List<PickleStep> steps) {
-		return steps.stream().map(step -> {
-			return new Bdd2PickleStep(step.getText(), step.getArgument(), step.getLocations());
-		}).collect(Collectors.toList());
 	}
 	
 	private void initMetaData(Map<String, Object> inMetaData) {
