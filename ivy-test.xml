@@ -22,7 +22,7 @@
     </configurations>
 
 	<dependencies>
-		<dependency org="com.qmetry" name="qaf" rev="3.0.0-beta-1"  conf="compile->default"/>
+		<dependency org="com.qmetry" name="qaf" rev="3.0.0-beta-2"  conf="compile->default"/>
 		<dependency org="io.cucumber" name="cucumber-core" rev="5.0.0"  conf="compile->default"/>
 		<dependency org="io.cucumber" name="gherkin" rev="5.2.0"  conf="compile->default"/>
 		

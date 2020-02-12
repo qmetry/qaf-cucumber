@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
-<project basedir="." default="build" name="QualityAutomationFramework" xmlns:ivy="antlib:org.apache.ivy.ant">
+<project basedir="." default="test" name="QualityAutomationFramework" xmlns:ivy="antlib:org.apache.ivy.ant">
 
 
 	<!-- Sets the DSTAMP, TSTAMP, and TODAY properties in the current project -->
@@ -12,10 +12,8 @@
 
 	<property name="bin.dir" value="${project.dir}/bin" />
 	<property name="src.dir" value="${project.dir}/src" />
-	<property name="test.dir" value="${project.dir}/test" />
-	<property name="test.src.dir" value="${test.dir}/src" />
-	<property name="ivy-test.xml" value="${project.dir}/ivy-test.xml" />
 	<property name="ivy.xml" value="${project.dir}/ivy.xml" />
+	<property name="test.dir" value="${project.dir}/test" />
 
 
 	<property name="meta.dir" value="${basedir}/META-INF" />
@@ -30,14 +28,6 @@
 			<include name="**/*.jar" />
 		</fileset>
 	</path>
-	<path id="test.classpath">
-		<fileset dir="${dist.dir}">
-			<include name="*.jar" />
-			<include name="**/*.jar" />
-		</fileset>
-		<path refid="build.classpath" />
-	</path>
-
 	<!-- IVY -->
 	<target name="download-ivy" unless="skip.download">
 		<mkdir dir="${ivy.jar.dir}" />
@@ -50,7 +40,7 @@
 		not necessary if you put ivy.jar in your ant lib directory if you already 
 		have ivy in your ant lib, you can simply remove this target and the dependency 
 		the 'go' target has on it ================================= -->
-	<target name="install-ivy" depends="download-ivy" description="--> install ivy">
+	<target name="install-ivy" description="--> install ivy">
 		<!-- try to load ivy here from local ivy dir, in case the user has not 
 			already dropped it into ant's lib dir (note that the latter copy will always 
 			take precedence). We will not fail as long as local lib dir exists (it may 
@@ -68,14 +58,6 @@
 		<ivy:cachepath pathid="lib.path.id" />
 
 		<ivy:addpath topath="build.classpath">
-			<path refid="lib.path.id" />
-		</ivy:addpath>
-	</target>
-	<target name="resolve-test" description="--> retrieve dependencies with ivy" depends="install-ivy">
-		<ivy:resolve file="${ivy-test.xml}" />
-		<ivy:cachepath pathid="lib.path.id" />
-
-		<ivy:addpath topath="test.classpath">
 			<path refid="lib.path.id" />
 		</ivy:addpath>
 	</target>
@@ -102,16 +84,6 @@
 		<javac debug="true" destdir="${bin.dir}" source="${source}" target="${target}" >
 			<src path="${src.dir}" />
 			<classpath refid="build.classpath" />
-		</javac>
-		<echo level="info">--- compile (finished) ---</echo>
-	</target>
-
-	<target depends="resolve-test, compile" name="test-compile">
-		<mkdir dir="${bin.dir}" />
-		<echo level="info">--- compile (start) ---</echo>
-		<javac debug="true" destdir="${bin.dir}" source="${source}" target="${target}">
-			<src path="${test.src.dir}" />
-			<classpath refid="test.classpath" />
 		</javac>
 		<echo level="info">--- compile (finished) ---</echo>
 	</target>
@@ -176,48 +148,11 @@
 			</manifest>
 		</jar>
 	</target>
-	<target name="junit-test" depends="resolve-test">
-		<mkdir dir="${test.dir}/test-results/junit" />
-		<echo>${bin.dir} \n ${basedir}</echo>
-		<junit printsummary="yes" haltonfailure="true" fork="true" dir="${test.dir}">
-			<!-- Project classpath, must include junit.jar -->
-			<classpath refid="test.classpath" />
-			<!-- test class -->
-			<classpath location="${bin.dir}" />
-
-			<test fork="false" name="com.qmetry.qaf.automation.cucumber.test.RunCucumberTest" haltonfailure="no" todir="${test.dir}/test-results/junit">
-				<formatter type="plain" />
-				<formatter type="xml" />
-			</test>
-
-		</junit>
+	<target name="test" depends="build" description="run tests">
+	     <ant antfile="${test.dir}/build.xml" target="test" inheritall="false"/>
 	</target>
-
-	<target name="test" depends="build, test-compile" description="run tests">
-		<delete dir="${test.dir}/test-results" failonerror="false" />
-		<!-- --><antcall target="junit-test" >
-			<param name="basedir" value="${test.dir}" />
-			<param name="project.dir" value="../" />
-		</antcall> 
-		<taskdef resource="testngtasks" classpathref="test.classpath" />
-		<testng classpathref="test.classpath" workingDir="${test.dir}" outputDir="${test.dir}/test-results" haltOnFailure="no" verbose="2">
-			<classpath location="${bin.dir}" />
-			<xmlfileset dir="${test.dir}/config" includes="testrun_config.xml" />
-			<sysproperty key="log4j.configuration" value="file:///${test.dir}/log4j.properties" />
-		</testng>
-		<!--<testng classpathref="test.classpath" workingDir="${test.dir}" outputDir="${test.dir}/test-results" haltOnFailure="no" verbose="2">
-					<classpath location="${bin.dir}" />
-			
-			<classfileset dir="${bin.dir}" includes="**/*.class" />
-			<sysproperty key="log4j.configuration" value="file:///${test.dir}/log4j.properties" />
-		</testng> -->
-		
-		<!-- run cucumener using junit runner -->
-
-
-
-	</target>
-	<target name="publish" depends="init, build, test">
+	<target name="publish" depends="init, build, test" description="publish artifacts to repository">
+		<ivy:resolve file="${ivy.xml}" showprogress="false" log="off" />
 		<!-- Determine build number from previously published revisions -->
 		<ivy:buildnumber resolver="${publish.resolver}" organisation="${ivy.organisation}" module="${ivy.module}" revision="${release.num}" />
 

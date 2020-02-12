@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="test" name="QualityAutomationFramework" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+
+	<!-- Sets the DSTAMP, TSTAMP, and TODAY properties in the current project -->
+	<tstamp>
+		<format property="build.timestamp" pattern="dd-MMM-yyyy HH:mm:ss" />
+	</tstamp>
+
+	<property name="project.root" value="../" />
+	<property name="test.dir" value="${basedir}" />
+
+	<property name="bin.dir" value="${test.dir}/bin" />
+	<property name="test.src.dir" value="${test.dir}/src" />
+
+	<property name="dist.dir" value="../build" />
+	<property name="ivy-test.xml" value="${project.root}/ivy-test.xml" />
+	<property name="lib.dir" value="${project.root}/lib" />
+
+
+	<property name="debuglevel" value="source,lines,vars" />
+	<property name="target" value="1.8" />
+	<property name="source" value="1.8" />
+
+	<path id="test.classpath">
+		<fileset dir="${dist.dir}">
+			<include name="*.jar" />
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+
+	<!-- ================================= target: resolve ================================= -->
+
+	<target name="resolve-test" description="--> retrieve dependencies with ivy">
+		<ivy:resolve file="../ivy-test.xml" />
+		<ivy:cachepath pathid="testlib.path.id" />
+
+		<ivy:addpath topath="test.classpath">
+			<path refid="testlib.path.id" />
+		</ivy:addpath>
+	</target>
+
+	<target name="clean">
+		<delete dir="${bin.dir}" failonerror="false" />
+		<delete dir="${test.dir}/test-results" failonerror="false" />
+	</target>
+
+
+
+	<target depends="resolve-test,clean" name="test-compile">
+		<mkdir dir="${bin.dir}" />
+		<mkdir dir="${test.dir}/test-results/junit" />
+
+		<echo level="info">--- compile (start) ---</echo>
+		<javac debug="true" destdir="${bin.dir}" source="${source}" target="${target}">
+			<src path="${test.src.dir}" />
+			<classpath refid="test.classpath" />
+		</javac>
+		<echo level="info">--- compile (finished) ---</echo>
+	</target>
+	<!-- ================================= target: build ================================= -->
+
+
+	<target name="test" depends="test-compile, junit-test, testng-test" description="run tests">
+	</target>
+	<target name="testng-test" depends="test-compile" description="run using testng BDD2Factory">
+		<taskdef resource="testngtasks" classpathref="test.classpath" />
+		<testng classpathref="test.classpath" workingDir="${test.dir}" outputDir="${test.dir}/test-results" haltOnFailure="no" verbose="0">
+			<classpath location="${bin.dir}" />
+			<xmlfileset dir="${test.dir}/config" includes="testrun_config.xml" />
+			<sysproperty key="log4j.configuration" value="file:///${test.dir}/log4j.properties" />
+		</testng>
+	</target>
+	<target name="junit-test" depends="resolve-test"  description="run cucumener using junit runner">
+		<!-- run cucumener using junit runner -->
+		<echo>${bin.dir} </echo>
+		<echo>${basedir}</echo>
+		<junit printsummary="yes" haltonfailure="true" dir="${basedir}" includeantruntime="true">
+			<!-- Project classpath, must include junit.jar -->
+	        <jvmarg value="-Djson.report.root.dir=${test.dir}/test-results" />
+	        <jvmarg value="-Djson.report.dir=${test.dir}/test-results/junit" />
+	        <jvmarg value="-Dlog4j.configuration=file:///${test.dir}/log4j.properties" />
+
+			<classpath refid="test.classpath" />
+			<!-- test class -->
+			<classpath location="${bin.dir}" />
+			<test fork="true" name="com.qmetry.qaf.automation.cucumber.test.RunCucumberTest" haltonfailure="no" todir="${test.dir}/test-results/junit">
+				<formatter type="plain" />
+				<formatter type="xml" />
+			</test>
+		</junit>
+	</target>
+</project>

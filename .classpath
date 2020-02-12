@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="lib" path="/qaf/build/artifacts/jars/qaf-sources.jar"/>
-	<classpathentry kind="lib" path="/qaf/build/artifacts/jars/qaf.jar" sourcepath="/qaf/src"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test/src"/>
 	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=qaf-cucumber&amp;ivyXmlPath=ivy-test.xml&amp;confs=*&amp;ivySettingsPath=ivysettings.xml&amp;loadSettingsOnDemand=false&amp;ivyUserDir=&amp;propertyFiles="/>
