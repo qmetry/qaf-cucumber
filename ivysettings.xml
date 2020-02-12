@@ -13,13 +13,10 @@
  	<credentials host="oss.sonatype.org"
                       realm="Sonatype Nexus Repository Manager"
                       username="${sonatype.user}" passwd="${sonatype.pwd}"/>
-	<settings defaultResolver="qaf" />
-	<property name="nexus-public"
-                   value="https://oss.sonatype.org/content/groups/public"/>
-  	<property name="nexus-releases" value="https://oss.sonatype.org/content/repositories/releases"/>
-  	<property name="nexus-snapshots" value="https://oss.sonatype.org/content/repositories/snapshots"/>
-	<property name="nexus-staging" value=" https://oss.sonatype.org/service/local/staging/deploy/maven2"/>
 	
+	<properties file="build.properties"/>
+	
+	<settings defaultResolver="qaf" />
 	<resolvers>
 		<chain name="qaf">
 			<ibiblio name="central" m2compatible="true" />
@@ -39,7 +36,5 @@
     <artifact name="${artifact.name}-javadoc" ext="jar" conf="development" type="javadoc"/>
     <artifact name="${artifact.name}-sources" ext="jar" conf="development" type="source"/>
 </publications>
-<signers>
-    <pgp name="${gpg.name}" password="${gpg.pwd}" />
-</signers>
+
 </ivysettings>
