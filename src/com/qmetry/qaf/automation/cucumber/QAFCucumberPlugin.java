@@ -6,8 +6,10 @@ package com.qmetry.qaf.automation.cucumber;
 import static com.qmetry.qaf.automation.core.ConfigurationManager.getBundle;
 import static com.qmetry.qaf.automation.data.MetaDataScanner.applyMetaRule;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 
@@ -259,8 +262,9 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 					} catch (Exception e) {
 					}
 				}
-				String className = tc.getScenarioDesignation()
-						.substring(0, tc.getScenarioDesignation().indexOf(".feature")).replaceAll("/", ".");
+				String className = getClassName(tc.getUri());
+//						tc.getScenarioDesignation()
+//						.substring(0, tc.getScenarioDesignation().indexOf(".feature")).replaceAll("/", ".");
 				QAFReporter.createMethodResult(className, bdd2Pickle, result.getDuration().toMillis(),
 						result.getStatus().name(), result.getError(), logs, checkpoints);
 				if (!isDryRun) {
@@ -275,6 +279,14 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			}
 		}
 
+		private String getClassName(URI uri) {
+			try {
+				return FilenameUtils.removeExtension(new File(uri).getName());
+			} catch (Exception e) {
+				return "allscenarios";
+			}
+		}
+		
 		private void deployResult(BDD2PickleWrapper bdd2Pickle, TestCase tc, Result eventresult) {
 			String updator = getBundle().getString("result.updator");
 			try {

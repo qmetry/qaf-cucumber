@@ -24,6 +24,9 @@ Feature: Belly
     Given I have 10 cukes in my "${remote.server}"
     When I wait 1 hour
     Then my belly should growl
+    And I have 1 {what} cucumber in my stomach (amazing!)
+    And I have 9 {what} cucumbers in my belly (amazing!)
+    
     
     Scenario: cukes with qaf steps
     Given I have 10 cukes in my "${remote.server}"

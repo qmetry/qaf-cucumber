@@ -18,9 +18,9 @@ import io.cucumber.core.exception.CucumberException;
  */
 public class CucumberStepMatcher extends DefaultBDDStepMatcher {
 	private static final Pattern PARAMETER_PATTERN = Pattern.compile("(\\\\\\\\)?\\{([^}]*)\\}");
-	private static final Pattern OPTIONAL_PATTERN = Pattern.compile("(\\\\\\\\)?\\(([^)]+)\\)");
+	private static final Pattern OPTIONAL_PATTERN = Pattern.compile("(\\\\)?\\(([^)]+)\\)");
 	private static final Pattern ALTERNATIVE_NON_WHITESPACE_TEXT_REGEXP = Pattern.compile("([^\\s^/]+)((/[^\\s^/]+)+)");
-	private static final String DOUBLE_ESCAPE = "\\\\";
+	private static final String ESCAPE = "\\";
 	private static final String PARAMETER_TYPES_CANNOT_BE_ALTERNATIVE = "Parameter types cannot be alternative: ";
 	private static final String PARAMETER_TYPES_CANNOT_BE_OPTIONAL = "Parameter types cannot be optional: ";
 
@@ -44,9 +44,8 @@ public class CucumberStepMatcher extends DefaultBDDStepMatcher {
 		while (matcher.find()) {
 			// look for double-escaped parentheses
 			String parameterPart = matcher.group(2);
-			if (DOUBLE_ESCAPE.equals(matcher.group(1))) {
-				matcher.appendReplacement(sb, "\\\\(" + parameterPart + "\\\\)");
-			} else {
+			String grp1=matcher.group(1);
+			if (!ESCAPE.equals(grp1)) {
 				checkNotParameterType(parameterPart, PARAMETER_TYPES_CANNOT_BE_OPTIONAL);
 				matcher.appendReplacement(sb, "(?:" + parameterPart + ")?");
 			}

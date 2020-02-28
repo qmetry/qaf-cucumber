@@ -16,10 +16,16 @@ public class BDD2Location implements Location {
     }
 
     static Location from(PickleLocation location) {
+    	if(null==location) {
+            return new BDD2Location(0, 0);
+    	}
         return new BDD2Location(location.getLine(), location.getColumn());
     }
 
     public static Location from(gherkin.ast.Location location) {
+    	if(null==location) {
+            return new BDD2Location(0, 0);
+    	}
         return new BDD2Location(location.getLine(), location.getColumn());
     }
 

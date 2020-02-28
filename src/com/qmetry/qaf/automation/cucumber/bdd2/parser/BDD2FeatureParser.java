@@ -4,8 +4,8 @@
 package com.qmetry.qaf.automation.cucumber.bdd2.parser;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -30,23 +30,28 @@ import io.cucumber.core.gherkin.Pickle;
  *
  */
 public class BDD2FeatureParser implements FeatureParser {
-    private static Feature parseGherkin5(URI path, String source) {
+    private static Optional<Feature> parseBDD2(URI path, String source) {
         try {
             Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
             TokenMatcher matcher = new TokenMatcher();
             GherkinDocument gherkinDocument = parser.parse(source, matcher);
-            GherkinDialectProvider dialectProvider = new GherkinDialectProvider();
-            List<Pickle> pickles = compilePickles(gherkinDocument, dialectProvider, path);
-            return new BDD2Feature(gherkinDocument, path, source, pickles);
+            if(gherkinDocument.getFeature() == null){
+                return Optional.empty();
+            }
+            List<Pickle> pickles = compilePickles(gherkinDocument, path);
+            if (pickles.isEmpty()) {
+                return Optional.empty();
+            }
+            Feature  feature =  new BDD2Feature(gherkinDocument, path, source, pickles);
+            return Optional.of(feature);
+
         } catch (ParserException e) {
             throw new FeatureParserException("Failed to parse resource at: " + path.toString(), e);
         }
     }
 
-    private static List<Pickle> compilePickles(GherkinDocument document, GherkinDialectProvider dialectProvider, URI path) {
-        if (document.getFeature() == null) {
-            return Collections.emptyList();
-        }
+    private static List<Pickle> compilePickles(GherkinDocument document,  URI path) {
+        GherkinDialectProvider dialectProvider = new GherkinDialectProvider();
         String language = document.getFeature().getLanguage();
         GherkinDialect dialect = dialectProvider.getDialect(language, null);
         return new Bdd2Compiler().compile(document)
@@ -60,9 +65,8 @@ public class BDD2FeatureParser implements FeatureParser {
 	 * @see io.cucumber.core.gherkin.FeatureParser#parse(java.net.URI, java.lang.String, java.util.function.Supplier)
 	 */
 	@Override
-	public Feature parse(URI path, String source, Supplier<UUID> idGenerator) {
-		// TODO Auto-generated method stub
-        return parseGherkin5(path, source);
+	public Optional<Feature> parse(URI path, String source, Supplier<UUID> idGenerator) {
+        return parseBDD2(path, source);
 	}
 
 	/* (non-Javadoc)

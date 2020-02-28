@@ -29,4 +29,10 @@
 				name="com.qmetry.qaf.automation.step.client.text.BDDTestFactory2" />
 		</classes>
 	</test>
+	<test name="Step Matcher Test" enabled="true">
+		<classes>
+			<class
+				name="com.qmetry.qaf.automation.cucumber.test.CucumberStepMatcherTest" />
+		</classes>
+	</test>
 </suite>
