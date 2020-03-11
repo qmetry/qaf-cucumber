@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.LogFactoryImpl;
@@ -31,7 +31,6 @@ import com.qmetry.qaf.automation.cucumber.bdd2.model.BDD2PickleWrapper;
 import com.qmetry.qaf.automation.integration.ResultUpdator;
 import com.qmetry.qaf.automation.integration.TestCaseResultUpdator;
 import com.qmetry.qaf.automation.integration.TestCaseRunResult;
-import com.qmetry.qaf.automation.keys.ApplicationProperties;
 import com.qmetry.qaf.automation.util.ClassUtil;
 import com.qmetry.qaf.automation.util.Reporter;
 import com.qmetry.qaf.automation.util.StringMatcher;
@@ -291,39 +290,32 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			String updator = getBundle().getString("result.updator");
 			try {
 				if (StringUtil.isNotBlank(updator)) {
-					TestCaseRunResult result = eventresult.getStatus() == Status.PASSED ? TestCaseRunResult.PASS
-							: eventresult.getStatus() == Status.FAILED ? TestCaseRunResult.FAIL
-									: TestCaseRunResult.SKIPPED;
+					TestCaseRunResult.Status result = eventresult.getStatus() == Status.PASSED ? TestCaseRunResult.Status.PASS
+							: eventresult.getStatus() == Status.FAILED ? TestCaseRunResult.Status.FAIL
+									: TestCaseRunResult.Status.SKIPPED;
 
 					// String method = testCase.getName();
 					Class<?> updatorCls = Class.forName(updator);
 
 					TestCaseResultUpdator updatorObj = (TestCaseResultUpdator) updatorCls.newInstance();
-					Map<String, Object> params = new TreeMap<String, Object>(String.CASE_INSENSITIVE_ORDER);
+					long stTime = System.currentTimeMillis() - eventresult.getDuration().toMillis();
 
-					params.put("name", tc.getName());
-					params.put("duration", eventresult.getDuration().toMillis());
+					Map<String, Object> executionInfo = new HashMap<String, Object>();
+					executionInfo.put("testName", getBundle().getString("testname", "BDD2"));
+					executionInfo.put("suiteName", QAFReporter.SUITENAME);
+					executionInfo.put("env", ConfigurationConverter.getMap(getBundle().subset("env")));
 
-					// Bdd2Pickle bdd2Pickle = getBdd2Pickle(event.getTestCase());
 					if (null != bdd2Pickle && null != bdd2Pickle.getMetaData()) {
-						params.putAll(bdd2Pickle.getMetaData());
-						Map<String, Object> testData = bdd2Pickle.getTestData();
-						if (testData != null) {
-							params.put("testdata", testData);
-							String identifierKey = ApplicationProperties.TESTCASE_IDENTIFIER_KEY
-									.getStringVal("testCaseId");
-							if (testData.containsKey(identifierKey)) {
-								params.put(identifierKey, testData.get(identifierKey));
-							}
-						}
+						List<String> steps = bdd2Pickle.getSteps().stream().map(s->s.getText()).collect(Collectors.toList());
+						TestCaseRunResult testCaseRunResult = new TestCaseRunResult(result, bdd2Pickle.getMetaData(),
+								new Object[] {bdd2Pickle.getTestData()}, executionInfo, steps,stTime);
+						ResultUpdator.updateResult(testCaseRunResult,updatorObj);
+					}else {
+						logger.warn("QAFCucumberPlugin is unable to deploy result");
 					}
-
-					QAFTestBase testBase = TestBaseProvider.instance().get();
-					ResultUpdator.updateResult(result, testBase.getHTMLFormattedLog() + testBase.getAssertionsLog(),
-							updatorObj, params);
 				}
 			} catch (Exception e) {
-				logger.warn("QAFCucumberPlugin unable to deploy result", e);
+				logger.warn("QAFCucumberPlugin is unable to deploy result", e);
 			}
 		}
 	};

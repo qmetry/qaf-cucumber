@@ -52,6 +52,9 @@ public class QAFReporter {
 	private static AtomicInteger failCnt = new AtomicInteger(0);
 	private static AtomicInteger skipCnt = new AtomicInteger(0);
 	private static AtomicInteger indexer = new AtomicInteger(0);
+	
+	public static final String SUITENAME = getBundle().getString("suite.name",
+			new File(".").getAbsoluteFile().getParentFile().getName());
 
 	public static void updateMetaInfo() {
 		createMetaInfo(false);
@@ -63,9 +66,6 @@ public class QAFReporter {
 	}
 
 	private static void createMetaInfo(boolean listEntry) {
-
-		String suiteName = getBundle().getString("suite.name",
-				new File(".").getAbsoluteFile().getParentFile().getName());
 		List<String> testNames = new ArrayList<String>();
 		testNames.add(getTestName());
 
@@ -83,7 +83,7 @@ public class QAFReporter {
 		} else {
 			report.setEndTime(System.currentTimeMillis());
 		}
-		report.setName(suiteName);
+		report.setName(SUITENAME);
 		report.setTests(testNames);
 		report.setDir(dir);
 
@@ -98,7 +98,7 @@ public class QAFReporter {
 		appendReportInfo(report);
 		if (listEntry) {
 			ReportEntry reportEntry = new ReportEntry();
-			reportEntry.setName(suiteName);
+			reportEntry.setName(SUITENAME);
 			reportEntry.setStartTime(getBundle().getLong("suit.start.ts", 0));
 			reportEntry.setDir(dir);
 			appendMetaInfo(reportEntry);
