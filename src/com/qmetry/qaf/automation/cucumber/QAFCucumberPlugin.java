@@ -29,7 +29,6 @@ import com.qmetry.qaf.automation.core.QAFTestBase;
 import com.qmetry.qaf.automation.core.TestBaseProvider;
 import com.qmetry.qaf.automation.cucumber.bdd2.model.BDD2PickleWrapper;
 import com.qmetry.qaf.automation.integration.ResultUpdator;
-import com.qmetry.qaf.automation.integration.TestCaseResultUpdator;
 import com.qmetry.qaf.automation.integration.TestCaseRunResult;
 import com.qmetry.qaf.automation.util.ClassUtil;
 import com.qmetry.qaf.automation.util.Reporter;
@@ -94,16 +93,16 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 
 		@Override
 		public void receive(TestStepStarted event) {
-			// TestStep step = event.getTestStep();
-			QAFTestBase stb = TestBaseProvider.instance().get();
-			ArrayList<CheckpointResultBean> allResults = new ArrayList<CheckpointResultBean>(
-					stb.getCheckPointResults());
-			ArrayList<LoggingBean> allCommands = new ArrayList<LoggingBean>(stb.getLog());
-			stb.getCheckPointResults().clear();
-			stb.getLog().clear();
-			stb.getContext().setProperty("allResults", allResults);
-			stb.getContext().setProperty("allCommands", allCommands);
-
+			if (event.getTestStep() instanceof PickleStepTestStep) {
+				QAFTestBase stb = TestBaseProvider.instance().get();
+				ArrayList<CheckpointResultBean> allResults = new ArrayList<CheckpointResultBean>(
+						stb.getCheckPointResults());
+				ArrayList<LoggingBean> allCommands = new ArrayList<LoggingBean>(stb.getLog());
+				stb.getCheckPointResults().clear();
+				stb.getLog().clear();
+				stb.getContext().setProperty("allResults", allResults);
+				stb.getContext().setProperty("allCommands", allCommands);
+			}
 		}
 	};
 	private EventHandler<TestStepFinished> stepfinishedHandler = new EventHandler<TestStepFinished>() {
@@ -287,17 +286,12 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		}
 		
 		private void deployResult(BDD2PickleWrapper bdd2Pickle, TestCase tc, Result eventresult) {
-			String updator = getBundle().getString("result.updator");
 			try {
-				if (StringUtil.isNotBlank(updator)) {
+				if (ResultUpdator.getResultUpdatorsCnt()>0) {
 					TestCaseRunResult.Status result = eventresult.getStatus() == Status.PASSED ? TestCaseRunResult.Status.PASS
 							: eventresult.getStatus() == Status.FAILED ? TestCaseRunResult.Status.FAIL
 									: TestCaseRunResult.Status.SKIPPED;
 
-					// String method = testCase.getName();
-					Class<?> updatorCls = Class.forName(updator);
-
-					TestCaseResultUpdator updatorObj = (TestCaseResultUpdator) updatorCls.newInstance();
 					long stTime = System.currentTimeMillis() - eventresult.getDuration().toMillis();
 
 					Map<String, Object> executionInfo = new HashMap<String, Object>();
@@ -309,7 +303,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 						List<String> steps = bdd2Pickle.getSteps().stream().map(s->s.getText()).collect(Collectors.toList());
 						TestCaseRunResult testCaseRunResult = new TestCaseRunResult(result, bdd2Pickle.getMetaData(),
 								new Object[] {bdd2Pickle.getTestData()}, executionInfo, steps,stTime);
-						ResultUpdator.updateResult(testCaseRunResult,updatorObj);
+						ResultUpdator.updateResult(testCaseRunResult);
 					}else {
 						logger.warn("QAFCucumberPlugin is unable to deploy result");
 					}
@@ -339,7 +333,6 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		private void endReport(TestRunFinished event) {
 			QAFReporter.updateMetaInfo();
 			QAFReporter.updateOverview(null, true);
-			;
 
 			TestBaseProvider.instance().stopAll();
 			ResultUpdator.awaitTermination();
