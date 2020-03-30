@@ -30,6 +30,7 @@ import com.qmetry.qaf.automation.core.TestBaseProvider;
 import com.qmetry.qaf.automation.cucumber.bdd2.model.BDD2PickleWrapper;
 import com.qmetry.qaf.automation.integration.ResultUpdator;
 import com.qmetry.qaf.automation.integration.TestCaseRunResult;
+import com.qmetry.qaf.automation.keys.ApplicationProperties;
 import com.qmetry.qaf.automation.util.ClassUtil;
 import com.qmetry.qaf.automation.util.Reporter;
 import com.qmetry.qaf.automation.util.StringMatcher;
@@ -225,6 +226,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 				TestCase tc = event.getTestCase();
 				BDD2PickleWrapper bdd2Pickle = getBdd2Pickle(tc);
 				boolean isDryRun = isDryRun(tc);
+				getBundle().setProperty(ApplicationProperties.DRY_RUN_MODE.key,isDryRun);
 				Result result = event.getResult();
 
 				Throwable throwable = result.getError();
@@ -265,9 +267,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 //						.substring(0, tc.getScenarioDesignation().indexOf(".feature")).replaceAll("/", ".");
 				QAFReporter.createMethodResult(className, bdd2Pickle, result.getDuration().toMillis(),
 						result.getStatus().name(), result.getError(), logs, checkpoints);
-				if (!isDryRun) {
-					deployResult(bdd2Pickle, tc, result);
-				}
+				deployResult(bdd2Pickle, tc, result);
 				String useSingleSeleniumInstance = getBundle().getString("selenium.singletone", "");
 				if (useSingleSeleniumInstance.toUpperCase().startsWith("M")) {
 					stb.tearDown();
@@ -302,7 +302,8 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 					if (null != bdd2Pickle && null != bdd2Pickle.getMetaData()) {
 						List<String> steps = bdd2Pickle.getSteps().stream().map(s->s.getText()).collect(Collectors.toList());
 						TestCaseRunResult testCaseRunResult = new TestCaseRunResult(result, bdd2Pickle.getMetaData(),
-								new Object[] {bdd2Pickle.getTestData()}, executionInfo, steps,stTime);
+								new Object[] {bdd2Pickle.getTestData()}, executionInfo, steps,stTime, false, true);
+						testCaseRunResult.setThrowable(eventresult.getError());
 						ResultUpdator.updateResult(testCaseRunResult);
 					}else {
 						logger.warn("QAFCucumberPlugin is unable to deploy result");
