@@ -66,7 +66,8 @@ public class Bdd2Compiler {
 		}
 
 		String language = feature.getLanguage();
-		List<Tag> featureTags = feature.getTags();
+		List<Tag> featureTags = new ArrayList<>(feature.getTags());
+		featureTags.add(new Tag(feature.getLocation(), "@Feature:"+feature.getName()));
 		List<Step> backgroundSteps = new ArrayList<>();
 
 		for (ScenarioDefinition scenarioDefinition : feature.getChildren()) {
