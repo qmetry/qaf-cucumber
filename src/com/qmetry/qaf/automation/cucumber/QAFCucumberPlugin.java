@@ -253,13 +253,13 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 							throwable);
 					try {
 						ClassUtil.setField("result", event, result);
-					} catch (Exception e) {
+					} catch (Throwable e) {
 					}
 				} else if (isDryRun && (null == throwable)) {
 					result = new Result(Status.PASSED, result.getDuration(), throwable);
 					try {
 						ClassUtil.setField("result", event, result);
-					} catch (Exception e) {
+					} catch (Throwable e) {
 					}
 				}
 				String className = getClassName(tc.getUri());

@@ -197,7 +197,11 @@ public class Bdd2Compiler {
 		}).collect(Collectors.toList());
 
 		listToReturn.add(new Examples(location, new ArrayList<>(), null, null, null, tableHeader, tableBody));
-		setField("examples", scenarioOutline, listToReturn);
+		try {
+			setField("examples", scenarioOutline, listToReturn);
+		} catch (Throwable t) {
+			// ignore it...
+		}
 
 		return listToReturn;
 	}
