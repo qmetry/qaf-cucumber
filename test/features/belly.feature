@@ -9,7 +9,17 @@ Feature: Belly
     |Chirag|
     And can't wait more 10 minutes for more "cucks"
     Then my belly should growl
-   
+  
+    @bug:4
+    Scenario: should fail when assertion failed
+    Given I have 10 cukes in my "${remote.server}"
+    When I wait 1 hour
+    And have assertion being failed
+    And set name:
+    |name|
+    |Chirag|
+    Then my belly should growl
+    
  	@qaf
     @DataFile:resources/data.txt
     Scenario Outline: few more cukes

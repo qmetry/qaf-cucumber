@@ -92,10 +92,17 @@ public class CucumberStep extends BaseTestStep {
 
 			s.execute(args);
 		} catch (CucumberInvocationTargetException cie) {
+			Throwable cause = cie.getInvocationTargetExceptionCause();
+			if (cause instanceof Error) {
+				throw (Error) cause;
+			}
+			if(cause instanceof RuntimeException){
+				throw (RuntimeException)cause;
+			}
 			// e.printStackTrace();
-			AutomationError ae = new AutomationError(cie.getInvocationTargetExceptionCause() + "-" + s.getLocation(),
-					cie.getInvocationTargetExceptionCause());
-			ae.setStackTrace(cie.getInvocationTargetExceptionCause().getStackTrace());
+			AutomationError ae = new AutomationError(cause + "-" + s.getLocation(),
+					cause);
+			ae.setStackTrace(cause.getStackTrace());
 
 			throw ae;
 		} catch (Exception e) {

@@ -98,6 +98,10 @@ public class StepDefinitions implements En {
 		Validator.verifyTrue(int1<251, "Cukes less than 251", "Cukes less than 251");
 	}
 	
+	@io.cucumber.java.en.Given("have assertion being failed")
+	public void haveAssertionBeingFailed(){
+		Validator.assertTrue(false,"should true","should true");
+	}
    @QAFTestStep(description="set name:{name}")
     public void _setName(Map<String,Object> first) {
 			System.out.println("name set to:: " +first);
