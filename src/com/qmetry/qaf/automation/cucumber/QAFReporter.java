@@ -136,13 +136,8 @@ public class QAFReporter {
 				executionEnvInfo.put("java.arch", System.getProperty("sun.arch.data.model"));
 
 				executionEnvInfo.put("user.name", System.getProperty("user.name"));
-				try {
-					executionEnvInfo.put("host", InetAddress.getLocalHost().getHostName());
-				} catch (Exception e) {
-					// This code added for MAC to fetch hostname
-					String hostname = execHostName("hostname");
-					executionEnvInfo.put("host", hostname);
-				}
+				executionEnvInfo.put("host", System.getProperty("host.name"));
+
 				envInfo.put("execution-env-info", executionEnvInfo);
 			}
 
@@ -341,25 +336,5 @@ public class QAFReporter {
 
 	private static String getTestName() {
 		return getBundle().getString("testname", "BDD2");
-	}
-
-	public static String execHostName(String execCommand) {
-		InputStream stream;
-		Scanner s;
-		try {
-			Process proc = Runtime.getRuntime().exec(execCommand);
-			stream = proc.getInputStream();
-			if (stream != null) {
-				s = new Scanner(stream);
-				s.useDelimiter("\\A");
-				String val = s.hasNext() ? s.next() : "";
-				stream.close();
-				s.close();
-				return val;
-			}
-		} catch (IOException ioException) {
-			ioException.printStackTrace();
-		}
-		return "";
 	}
 }
