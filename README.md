@@ -56,13 +56,15 @@ When you are using QAF BDD runner you can use Cucumber 5 steps with QAF BDD or B
  Refer [documentation](https://qmetry.github.io/qaf/latest/bdd-configuration.html) for more details.
  
 ### Using qaf-cucumber with Cucumber runner
-When you want to use cucumber or cucumber runner you can get support of `BDD2` and QAF reporting. 
+When you want to use cucumber or cucumber runner you can get support of `BDD2` and QAF [detailed reporting](https://qmetry.github.io/qaf/latest/qaf_reporting.html). 
 
 ##### QAF Over Cucumber 
- Following are **additional features** when used QAF with Cucumber:
+ Following are **additional features** when used Cucumber with QAF:
  * `BDD2` Support
+ * [Example from external file](https://qmetry.github.io/qaf/latest/bdd2.html#data-driven-scenario).
  * Verification support
- * QAF Detailed reporting
+ * [Resource Management](https://qmetry.github.io/qaf/latest/managing_resources_for_different_env.html)
+ * QAF [detailed reporting](https://qmetry.github.io/qaf/latest/qaf_reporting.html)
  * Integration with third party tools
  * QAF backend (like cucumber-java and cucumber-java8 backend)
  * Inbuilt Web/MObile/Web-service functional test automation support
