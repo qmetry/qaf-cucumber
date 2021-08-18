@@ -265,8 +265,10 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 				String className = getClassName(tc.getUri());
 //						tc.getScenarioDesignation()
 //						.substring(0, tc.getScenarioDesignation().indexOf(".feature")).replaceAll("/", ".");
-				QAFReporter.createMethodResult(className, bdd2Pickle, result.getDuration().toMillis(),
+				if (!getBundle().getBoolean("qaf.json.reporter", true)) {
+					QAFReporter.createMethodResult(className, bdd2Pickle, result.getDuration().toMillis(),
 						result.getStatus().name(), result.getError(), logs, checkpoints);
+				}
 				deployResult(bdd2Pickle, tc, result);
 				String useSingleSeleniumInstance = getBundle().getString("selenium.singletone", "");
 				if (useSingleSeleniumInstance.toUpperCase().startsWith("M")) {
@@ -322,7 +324,9 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		}
 
 		private void startReport(TestRunStarted event) {
-			QAFReporter.createMetaInfo();
+			if (!getBundle().getBoolean("qaf.json.reporter", true)) {
+				QAFReporter.createMetaInfo();
+			}
 		}
 	};
 	private EventHandler<TestRunFinished> runFinishedHandler = new EventHandler<TestRunFinished>() {
@@ -332,9 +336,10 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		}
 
 		private void endReport(TestRunFinished event) {
-			QAFReporter.updateMetaInfo();
-			QAFReporter.updateOverview(null, true);
-
+			if (!getBundle().getBoolean("qaf.json.reporter", true)) {
+				QAFReporter.updateMetaInfo();
+				QAFReporter.updateOverview(null, true);
+			}
 			TestBaseProvider.instance().stopAll();
 			ResultUpdator.awaitTermination();
 		}
