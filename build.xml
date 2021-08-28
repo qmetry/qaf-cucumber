@@ -3,7 +3,6 @@
 <project basedir="." default="test" name="QualityAutomationFramework" xmlns:ivy="antlib:org.apache.ivy.ant">
 
 	<get src="https://raw.githubusercontent.com/qmetry/qaf-parent/master/common-build-tasks.xml" dest="../common-build-tasks.xml" skipexisting="true"/>
-	<import file="../common-build-tasks.xml" optional="false" />
 	
 	<property name="project.dir" value="${basedir}" />
 
@@ -69,4 +68,6 @@
 	<target name="test" depends="build" description="run tests">
 	     <ant antfile="${test.dir}/build.xml" target="test" inheritall="false"/>
 	</target>
+	<import file="../common-build-tasks.xml" optional="false" />
+
 </project>
