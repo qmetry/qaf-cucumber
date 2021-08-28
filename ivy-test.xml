@@ -35,6 +35,9 @@
 		<dependency org="org.aspectj" name="aspectjtools" rev="1.9.5" conf="compile->default">
 			<artifact name="aspectjtools" type="jar"></artifact>
 		</dependency>
+		<dependency org="org.testng" name="testng" rev="6.10" conf="test->default">
+			<artifact name="testng" type="jar"/>
+		</dependency>		
 		<dependency org="io.cucumber" name="cucumber-core" rev="5.4.1"  conf="compile->default"/>
 		<dependency org="io.cucumber" name="gherkin" rev="5.2.0"  conf="compile->default"/>
 		
