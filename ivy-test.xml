@@ -48,6 +48,7 @@
 		</dependency>
 		<dependency org="org.aspectj" name="aspectjtools" rev="1.9.5" conf="compile->default">
 			<artifact name="aspectjtools" type="jar"></artifact>
+		</dependency>
 		
 	</dependencies>
 </ivy-module>
