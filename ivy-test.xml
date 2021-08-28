@@ -23,6 +23,18 @@
 
 	<dependencies>
 		<dependency org="com.qmetry" name="qaf" rev="${ivy.revision}"  conf="compile->default"/>
+				
+		<!-- aspectj -->
+		<dependency org="org.aspectj" name="aspectjrt" rev="1.9.5" conf="compile->default">
+			<artifact name="aspectjrt" type="jar"></artifact>
+		</dependency>
+
+		<dependency org="org.aspectj" name="aspectjweaver" rev="1.9.5" conf="compile->default">
+			<artifact name="aspectjweaver" type="jar"></artifact>
+		</dependency>
+		<dependency org="org.aspectj" name="aspectjtools" rev="1.9.5" conf="compile->default">
+			<artifact name="aspectjtools" type="jar"></artifact>
+		</dependency>
 		<dependency org="io.cucumber" name="cucumber-core" rev="5.4.1"  conf="compile->default"/>
 		<dependency org="io.cucumber" name="gherkin" rev="5.2.0"  conf="compile->default"/>
 		
@@ -37,18 +49,7 @@
 		<dependency org="org.springframework" name="spring-beans" rev="5.2.0.RELEASE"  conf="test->default"/>
 		<dependency org="org.springframework" name="spring-context" rev="5.2.0.RELEASE"  conf="test->default"/>
 		<dependency org="org.springframework" name="spring-test" rev="5.2.0.RELEASE"  conf="test->default"/>
-		
-		<!-- aspectj -->
-		<dependency org="org.aspectj" name="aspectjrt" rev="1.9.5" conf="compile->default">
-			<artifact name="aspectjrt" type="jar"></artifact>
-		</dependency>
 
-		<dependency org="org.aspectj" name="aspectjweaver" rev="1.9.5" conf="compile->default">
-			<artifact name="aspectjweaver" type="jar"></artifact>
-		</dependency>
-		<dependency org="org.aspectj" name="aspectjtools" rev="1.9.5" conf="compile->default">
-			<artifact name="aspectjtools" type="jar"></artifact>
-		</dependency>
 		
 	</dependencies>
 </ivy-module>
