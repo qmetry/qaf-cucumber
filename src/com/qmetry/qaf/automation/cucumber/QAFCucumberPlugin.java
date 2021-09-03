@@ -206,7 +206,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		@Override
 		public void receive(TestCaseStarted event) {
 			BDD2PickleWrapper bdd2Pickle = getBdd2Pickle(event.getTestCase());
-			bdd2Pickle.getMetaData().put("reference", event.getTestCase().getUri());
+			bdd2Pickle.getMetaData().put("reference", new File("./").getAbsoluteFile().getParentFile().toURI().relativize(event.getTestCase().getUri()));
 			QAFTestBase stb = TestBaseProvider.instance().get();
 			stb.getLog().clear();
 			stb.clearVerificationErrors();
@@ -305,6 +305,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 						List<String> steps = bdd2Pickle.getSteps().stream().map(s->s.getText()).collect(Collectors.toList());
 						TestCaseRunResult testCaseRunResult = new TestCaseRunResult(result, bdd2Pickle.getMetaData(),
 								new Object[] {bdd2Pickle.getTestData()}, executionInfo, steps,stTime, false, true);
+						testCaseRunResult.setClassName(((URI)bdd2Pickle.getMetaData().get("reference")).getPath());
 						testCaseRunResult.setThrowable(eventresult.getError());
 						ResultUpdator.updateResult(testCaseRunResult);
 					}else {
@@ -340,13 +341,18 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 				QAFReporter.updateMetaInfo();
 				QAFReporter.updateOverview(null, true);
 			}
-			TestBaseProvider.instance().stopAll();
-			ResultUpdator.awaitTermination();
+			if(!getBundle().getBoolean("usingtestngrunner", false)) {
+				TestBaseProvider.instance().stopAll();
+				ResultUpdator.awaitTermination();
+			}
 		}
 	};
 
-	private static BDD2PickleWrapper getBdd2Pickle(Object testCase) {
+	public static BDD2PickleWrapper getBdd2Pickle(Object testCase) {
 		try {
+			if (testCase instanceof BDD2PickleWrapper) 
+				return ((BDD2PickleWrapper) testCase);
+			
 			Object pickle = getField("pickle", testCase);
 			if (pickle instanceof BDD2PickleWrapper) {
 				return ((BDD2PickleWrapper) pickle);

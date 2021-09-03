@@ -1,7 +1,5 @@
 package com.qmetry.qaf.automation.cucumber.bdd2.parser;
 
-import static com.qmetry.qaf.automation.data.MetaDataScanner.formatMetaData;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +42,10 @@ public class Bdd2Pickle extends Pickle {
 	public Map<String, Object> getMetaData() {
 		return metaData;
 	}
+	
+	public void setMetaData(Map<String, Object> metaData) {
+		this.metaData = metaData;
+	}
 
 	public Map<String, Object> getTestData() {
 		return testData;
@@ -53,6 +55,6 @@ public class Bdd2Pickle extends Pickle {
 		metaData=new TreeMap<String, Object>(String.CASE_INSENSITIVE_ORDER);
 		metaData.putAll(inMetaData);
 		metaData.put("name", getName());
-		formatMetaData(metaData);
+		//formatMetaData(metaData);
 	}
 }

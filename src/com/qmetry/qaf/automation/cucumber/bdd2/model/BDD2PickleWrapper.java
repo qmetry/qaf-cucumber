@@ -140,5 +140,9 @@ public class BDD2PickleWrapper implements Pickle {
 	public Map<String, Object> getMetaData() {
 		return  ((Bdd2Pickle)pickle).getMetaData();
 	}
+	
+	public void setMetaData(Map<String, Object> metadata) {
+		 ((Bdd2Pickle)pickle).setMetaData(metadata);
+	}
 
 }
