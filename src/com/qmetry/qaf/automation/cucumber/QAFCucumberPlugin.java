@@ -5,11 +5,11 @@ package com.qmetry.qaf.automation.cucumber;
 
 import static com.qmetry.qaf.automation.core.ConfigurationManager.getBundle;
 import static com.qmetry.qaf.automation.data.MetaDataScanner.applyMetaRule;
+import static com.qmetry.qaf.automation.util.ReportUtils.setScreenshot;
 
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.configuration.ConfigurationConverter;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 
@@ -51,7 +50,6 @@ import io.cucumber.plugin.event.TestRunStarted;
 import io.cucumber.plugin.event.TestStepFinished;
 import io.cucumber.plugin.event.TestStepStarted;
 import io.cucumber.plugin.event.WriteEvent;
-
 /**
  * This is cucumber plugin need to be used when Cucumber runner is used. It will
  * generate QAF JSON reports.
@@ -206,7 +204,7 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		@Override
 		public void receive(TestCaseStarted event) {
 			BDD2PickleWrapper bdd2Pickle = getBdd2Pickle(event.getTestCase());
-			bdd2Pickle.getMetaData().put("reference", new File("./").getAbsoluteFile().getParentFile().toURI().relativize(event.getTestCase().getUri()));
+			bdd2Pickle.getMetaData().put("reference", new File("./").getAbsoluteFile().getParentFile().toURI().relativize(event.getTestCase().getUri()).getPath());
 			QAFTestBase stb = TestBaseProvider.instance().get();
 			stb.getLog().clear();
 			stb.clearVerificationErrors();
@@ -243,9 +241,6 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 						stb.addVerificationError(throwable);
 					}
 				}
-				final List<CheckpointResultBean> checkpoints = new ArrayList<CheckpointResultBean>(
-						stb.getCheckPointResults());
-				final List<LoggingBean> logs = new ArrayList<LoggingBean>(stb.getLog());
 
 				if (stb.getVerificationErrors() > 0 && (result.getStatus().is(Status.PASSED) || isDryRun)) {
 
@@ -262,12 +257,16 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 					} catch (Throwable e) {
 					}
 				}
-				String className = getClassName(tc.getUri());
-//						tc.getScenarioDesignation()
-//						.substring(0, tc.getScenarioDesignation().indexOf(".feature")).replaceAll("/", ".");
-				if (!getBundle().getBoolean("qaf.json.reporter", true)) {
-					QAFReporter.createMethodResult(className, bdd2Pickle, result.getDuration().toMillis(),
-						result.getStatus().name(), result.getError(), logs, checkpoints);
+				
+				if(!isDryRun &&  !result.getStatus().is(Status.PASSED)) {
+					if(throwable instanceof AutomationError) {
+						result = new Result(Status.SKIPPED, result.getDuration(), throwable);
+						try {
+							ClassUtil.setField("result", event, result);
+						} catch (Throwable e) {
+						}
+					}
+					setScreenshot(throwable);
 				}
 				deployResult(bdd2Pickle, tc, result);
 				String useSingleSeleniumInstance = getBundle().getString("selenium.singletone", "");
@@ -279,14 +278,6 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			}
 		}
 
-		private String getClassName(URI uri) {
-			try {
-				return FilenameUtils.removeExtension(new File(uri).getName());
-			} catch (Exception e) {
-				return "allscenarios";
-			}
-		}
-		
 		private void deployResult(BDD2PickleWrapper bdd2Pickle, TestCase tc, Result eventresult) {
 			try {
 				if (ResultUpdator.getResultUpdatorsCnt()>0) {
@@ -302,11 +293,15 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 					executionInfo.put("env", ConfigurationConverter.getMap(getBundle().subset("env")));
 
 					if (null != bdd2Pickle && null != bdd2Pickle.getMetaData()) {
+						
 						List<String> steps = bdd2Pickle.getSteps().stream().map(s->s.getText()).collect(Collectors.toList());
+						Object[] testdata = bdd2Pickle.getTestData()!=null?new Object[] {bdd2Pickle.getTestData()}:null;
+						
 						TestCaseRunResult testCaseRunResult = new TestCaseRunResult(result, bdd2Pickle.getMetaData(),
-								new Object[] {bdd2Pickle.getTestData()}, executionInfo, steps,stTime, false, true);
-						testCaseRunResult.setClassName(((URI)bdd2Pickle.getMetaData().get("reference")).getPath());
+								testdata , executionInfo, steps,stTime, false, true);
+						testCaseRunResult.setClassName(bdd2Pickle.getMetaData().get("reference").toString());
 						testCaseRunResult.setThrowable(eventresult.getError());
+						
 						ResultUpdator.updateResult(testCaseRunResult);
 					}else {
 						logger.warn("QAFCucumberPlugin is unable to deploy result");
@@ -321,13 +316,6 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 	private EventHandler<TestRunStarted> runStartedHandler = new EventHandler<TestRunStarted>() {
 		@Override
 		public void receive(TestRunStarted event) {
-			startReport(event);
-		}
-
-		private void startReport(TestRunStarted event) {
-			if (!getBundle().getBoolean("qaf.json.reporter", true)) {
-				QAFReporter.createMetaInfo();
-			}
 		}
 	};
 	private EventHandler<TestRunFinished> runFinishedHandler = new EventHandler<TestRunFinished>() {
@@ -337,10 +325,6 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 		}
 
 		private void endReport(TestRunFinished event) {
-			if (!getBundle().getBoolean("qaf.json.reporter", true)) {
-				QAFReporter.updateMetaInfo();
-				QAFReporter.updateOverview(null, true);
-			}
 			if(!getBundle().getBoolean("usingtestngrunner", false)) {
 				TestBaseProvider.instance().stopAll();
 				ResultUpdator.awaitTermination();

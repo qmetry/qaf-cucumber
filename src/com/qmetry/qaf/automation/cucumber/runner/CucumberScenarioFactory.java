@@ -18,7 +18,6 @@ import java.util.function.Supplier;
 
 import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.commons.exec.util.MapUtils;
-import org.jsoup.internal.StringUtil;
 import org.testng.ITestContext;
 import org.testng.annotations.Factory;
 
@@ -26,6 +25,7 @@ import com.qmetry.qaf.automation.core.ConfigurationManager;
 import com.qmetry.qaf.automation.cucumber.QAFCucumberPlugin;
 import com.qmetry.qaf.automation.keys.ApplicationProperties;
 import com.qmetry.qaf.automation.util.DateUtil;
+import com.qmetry.qaf.automation.util.StringUtil;
 
 import io.cucumber.core.eventbus.EventBus;
 import io.cucumber.core.feature.FeatureParser;
@@ -62,9 +62,11 @@ public class CucumberScenarioFactory {
 	@Factory
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Object[] getTestsFromFile(ITestContext context) {
-		ConfigurationManager.addAll(context.getCurrentXmlTest().getAllParameters());
+		getBundle().setProperty("usingtestngrunner", true);
+		//to resolve in cucumber options
 		context.getCurrentXmlTest().getLocalParameters().put("testname", context.getCurrentXmlTest().getName());
-		getBundle().setProperty("testname", context.getCurrentXmlTest().getName());
+		ConfigurationManager.addAll(context.getCurrentXmlTest().getAllParameters());
+		//getBundle().setProperty("testname", context.getCurrentXmlTest().getName());
 		
 		EventBus eventBus = new TimeServiceEventBus(Clock.systemUTC(), UUID::randomUUID);
 		context.setAttribute("eventBus", eventBus);
@@ -93,7 +95,7 @@ public class CucumberScenarioFactory {
 		plugins.addPlugin(exitStatus);
 		QAFCucumberPlugin qafCucumberPlugin = new QAFCucumberPlugin();
 		if (plugins.getPlugins().stream().noneMatch(p -> (p instanceof QAFCucumberPlugin))) {
-			plugins.addPlugin(qafCucumberPlugin);
+			plugins.getPlugins().add(0,qafCucumberPlugin);
 			System.out.println("Added QAFCucumberPlugin");
 		}
 

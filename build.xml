@@ -3,7 +3,9 @@
 <project basedir="." default="test" name="QualityAutomationFramework" xmlns:ivy="antlib:org.apache.ivy.ant">
 
 	<get src="https://raw.githubusercontent.com/qmetry/qaf-parent/master/common-build-tasks.xml" dest="../common-build-tasks.xml" skipexisting="true"/>
-	
+	<get src="https://raw.githubusercontent.com/qmetry/qaf-parent/master/ivysettings.xml" dest="../ivysettings.xml" skipexisting="true"/>
+	<get src="https://raw.githubusercontent.com/qmetry/qaf-parent/master/build.properties" dest="build.properties" skipexisting="true"/>
+
 	<property name="project.dir" value="${basedir}" />
 
 	<property name="bin.dir" value="${project.dir}/bin" />
