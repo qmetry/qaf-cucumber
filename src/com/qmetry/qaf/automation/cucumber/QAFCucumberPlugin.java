@@ -9,7 +9,6 @@ import static com.qmetry.qaf.automation.util.ReportUtils.setScreenshot;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.configuration.ConfigurationConverter;
+import org.apache.commons.lang.reflect.FieldUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 
@@ -244,27 +244,15 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 
 				if (stb.getVerificationErrors() > 0 && (result.getStatus().is(Status.PASSED) || isDryRun)) {
 
-					result = new Result(null != throwable ? result.getStatus() : Status.FAILED, result.getDuration(),
-							throwable);
-					try {
-						ClassUtil.setField("result", event, result);
-					} catch (Throwable e) {
-					}
+					setStauts(event, null != throwable ? result.getStatus() : Status.FAILED, throwable);
+
 				} else if (isDryRun && (null == throwable)) {
-					result = new Result(Status.PASSED, result.getDuration(), throwable);
-					try {
-						ClassUtil.setField("result", event, result);
-					} catch (Throwable e) {
-					}
+					setStauts(event, Status.PASSED, throwable);
 				}
 				
 				if(!isDryRun &&  !result.getStatus().is(Status.PASSED)) {
 					if(throwable instanceof AutomationError) {
-						result = new Result(Status.SKIPPED, result.getDuration(), throwable);
-						try {
-							ClassUtil.setField("result", event, result);
-						} catch (Throwable e) {
-						}
+						setStauts(event, Status.SKIPPED, throwable);
 					}
 					setScreenshot(throwable);
 				}
@@ -278,6 +266,25 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 			}
 		}
 
+		private void setStauts(TestCaseFinished event, Status status, Throwable error) {
+			Result result = event.getResult();
+			if (null == error) {
+				error = result.getError();
+			}
+			try {
+				result.setStatus(status);
+				result.setError(error);
+			} catch (Throwable e) {
+				logger.debug("Unable to set status " + status + ": " + e.getMessage());
+
+				result = new Result(status, result.getDuration(), error);
+				try {
+					ClassUtil.setField("result", event, result);
+				} catch (Throwable t) {
+					logger.warn("Unable to set status " + status + ": " + t.getMessage());
+				}
+			}
+		}
 		private void deployResult(BDD2PickleWrapper bdd2Pickle, TestCase tc, Result eventresult) {
 			try {
 				if (ResultUpdator.getResultUpdatorsCnt()>0) {
@@ -350,27 +357,31 @@ public class QAFCucumberPlugin implements ConcurrentEventListener {
 
 	public static Object getField(String fieldName, Object classObj) {
 		try {
-
-			Field field = null;
+			return FieldUtils.readField(classObj, fieldName, true);
+		} catch (Exception e1) {
 			try {
-				field = classObj.getClass().getField(fieldName);
-			} catch (NoSuchFieldException e) {
-				Field[] fields = ClassUtil.getAllFields(classObj.getClass(), Object.class);
-				for (Field f : fields) {
-					if (f.getName().equalsIgnoreCase(fieldName)) {
-						field = f;
-						break;
+
+				Field field = null;
+				try {
+					field = classObj.getClass().getField(fieldName);
+				} catch (NoSuchFieldException e) {
+					Field[] fields = ClassUtil.getAllFields(classObj.getClass(), Object.class);
+					for (Field f : fields) {
+						if (f.getName().equalsIgnoreCase(fieldName)) {
+							field = f;
+							break;
+						}
 					}
 				}
-			}
 
-			field.setAccessible(true);
-			Field modifiersField = Field.class.getDeclaredField("modifiers");
-			modifiersField.setAccessible(true);
-			modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-			return field.get(classObj);
-		} catch (Exception e) {
-			e.printStackTrace();
+				field.setAccessible(true);
+				Field modifiersField = Field.class.getDeclaredField("modifiers");
+				modifiersField.setAccessible(true);
+				//modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+				return field.get(classObj);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		return null;
 	}
