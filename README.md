@@ -1,3 +1,6 @@
+[![License](https://img.shields.io/github/license/qmetry/qaf-cucumber.svg)](http://www.opensource.org/licenses/mit-license.php)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.qmetry/qaf-cucumber/badge.svg)](https://mvnrepository.com/artifact/com.qmetry/qaf-cucumber/latest)
+[![javadoc](https://javadoc.io/badge2/com.qmetry/qaf-cucumber/javadoc.svg)](https://javadoc.io/doc/com.qmetry/qaf-cucumber)
 # qaf-cucumber
 This plug-in can be used for any of the following purpose:
  
