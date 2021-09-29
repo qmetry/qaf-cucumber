@@ -38,6 +38,7 @@
 	<!-- ================================= target: resolve ================================= -->
 
 	<target name="resolve-test" description="--> retrieve dependencies with ivy">
+		<ivy:settings file="../../ivysettings.xml" />
 		<ivy:resolve file="../ivy-test.xml" />
 		<ivy:cachepath pathid="testlib.path.id" />
 
